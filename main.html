@@ -86,7 +86,7 @@
 
 			function start(){
 				if(interval == -1){
-					interval = window.setInterval("main();",30);
+					interval = window.setInterval("main();",20);
 				}
 			}
 
@@ -105,6 +105,7 @@
 					var particle = new Particle(1000, width/2+x, height/2+y, y*(mag/70), -x*(mag/70));
 					particleList.push(particle);
 				}
+				ga('send', 'event', 'Gravity.js', 'Protodisk');
 			}
 
 			function setSize(size){
@@ -129,7 +130,7 @@
 	<body onload = "init();start();" style="background-color:black">
 		<div class="noselect">
 			Inspired by the classic <a href="http://www.nowykurier.com/toys/gravity/gravity.html">Gravity Toy</a> and rewritten in Javascript.</br>
-			Click and drag to add new particles. Hold shift and drag to translate.</br></br>
+			Click and drag to add new particles. Hold shift and drag to translate. (Rightclick for negative mass)</br></br>
 			<div id="controlbox" style="z-index:4">
 				<table>
 					<tr>Mass:<input type="text" value="1.0e3" class="txt" style="width:50px;" id="mass"></tr></br>
@@ -138,11 +139,15 @@
 					<tr><button onclick="setSize(10000)">Medium</button></tr></br>
 					<tr><button onclick="setSize(100000)">Huge</button></tr></br>
 					<tr><button onclick="setSize(1000000)">Enormous</button></tr>
+					<tr><button onclick="toggleTrails()">Toggle Trails</button></tr></br>
 				</table>
 				<button onclick="start()">Start</button></br>
 				<button onclick="stop()">Stop</button></br>
 				<button onclick="generateProto()">Protodisk</button></br>
 				<button onclick="clearCanvas()">Clear</button></br>
+				<button onclick="saveSimulation()">Save Simulation</button></br>
+				<input type="file" id="loadSimulationInput" style="display:none;" onchange="loadSimulation(event)">
+				<button onclick="document.getElementById('loadSimulationInput').click()">Load Simulation</button></br>
 			</div>
 		</div>
 		<canvas id="canvas" style="z-index:-1;position:absolute;left: 0px;top: 0px;"></canvas>
