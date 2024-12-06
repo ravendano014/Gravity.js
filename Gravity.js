@@ -1,153 +1,239 @@
-
-
 //Simulates and draws Particles
-
 //TODO: improve integration code. Why not add accelerations to both particles being compared?
+var showTrails = false; // Inicialmente desactivado
+var tinyParticleRadius = Math.log(Math.E + 100 / 1e3); // Tamaño para masa 100
+var trailPositions = [];
 
-var h = 1/200;
-var context;
-var particleList = new Array();
-var context;
-var frametime;
-var starttime;
-var width;
-var height;
-var startCoords = [-1,-1];
-var endCoords = [-1,-1];
-var newMass = 1000;
-var onControlBox = false;
-var shiftDown = false;
-var particleShift = [0,0];
+function init() {
+    var t = document.getElementById("canvas"),
+        e = document.getElementById("controlbox");
+    (t.width = window.innerWidth - 30),
+        (t.height = window.innerHeight - 20),
+        (width = t.width),
+        (height = t.height),
+        (context = t.getContext("2d")),
+        window.addEventListener("mousedown", mouseDownListener, !1),
+        (e.onmouseover = function () {
+            onControlBox = !0;
+        }),
+        (e.onmouseout = function () {
+            onControlBox = !1;
+        });
+}
+function main() {
+    (starttime = Date.now()), integrate(), draw(), (frametime = Date.now() - starttime);
+}
+function mouseDownListener(t) {
+    onControlBox ||
+        ((shiftDown = t.shiftKey),
+        (startCoords[0] = t.clientX),
+        (startCoords[1] = t.clientY),
+        (endCoords[0] = t.clientX),
+        (endCoords[1] = t.clientY),
+        window.addEventListener("mousemove", mouseMoveListener, !1),
+        window.addEventListener("mouseup", mouseUpListener, !1));
+}
+function mouseMoveListener(t) {
+    (endCoords[0] = t.clientX), (endCoords[1] = t.clientY);
+}
+function mouseUpListener(event) {
+    // Remover los listeners de movimiento y liberación del mouse
+    window.removeEventListener("mousemove", mouseMoveListener);
+    window.removeEventListener("mouseup", mouseUpListener);
 
-function init(){
-	var canvas = document.getElementById("canvas");
-	var div = document.getElementById("controlbox");
-	canvas.width = window.innerWidth-30;
-	canvas.height = window.innerHeight-20;
-	width = canvas.width;
-	height = canvas.height;
-	context = canvas.getContext("2d");
-	window.addEventListener('mousedown',mouseDownListener,false);
-	div.onmouseover = function(){onControlBox=true;};
-	div.onmouseout = function(){onControlBox=false;};
+    // Crear partículas con diferentes masas según el botón del mouse
+    if (!event.shiftKey && !shiftDown) {
+        var mass = event.button === 2 ? -newMass : newMass; // Masa negativa para clic derecho
+        var particle = new Particle(
+            mass,
+            startCoords[0],
+            startCoords[1],
+            endCoords[0] - startCoords[0],
+            endCoords[1] - startCoords[1]
+        );
+        particleList.push(particle);
+    }
+
+    // Movimiento del sistema con Shift
+    if (event.shiftKey && shiftDown) {
+        particleShift = [
+            endCoords[0] - startCoords[0],
+            endCoords[1] - startCoords[1],
+        ];
+    }
+
+    // Reiniciar coordenadas
+    startCoords = [-1, -1];
+    endCoords = [-1, -1];
 }
 
-function main(){
-	starttime = Date.now();
-	integrate();
-	draw();
-	frametime = Date.now()-starttime;
+function setNewMass(t) {
+    console.log(t), (newMass = t);
+}
+function integrate() {
+    for (var t = new Array(), e = 0; e < particleList.length; e++) {
+        for (var o = particleList[e], r = 0, i = 0, s = 0; s < particleList.length; s++)
+            if (((otherParticle = particleList[s]), o != otherParticle && !o.collided && !otherParticle.collided)) {
+                var a = otherParticle.x - o.x,
+                    n = otherParticle.y - o.y,
+                    c = Math.sqrt(a * a + n * n);
+                if (c < o.radius / 1.5 + otherParticle.radius / 1.5) {
+                    (o.collided = !0), (otherParticle.collided = !0);
+                    var l = o.mass + otherParticle.mass,
+                        d = new Particle(
+                            l,
+                            (o.x * o.mass + otherParticle.x * otherParticle.mass) / l,
+                            (o.y * o.mass + otherParticle.y * otherParticle.mass) / l,
+                            (o.vx * o.mass + otherParticle.vx * otherParticle.mass) / l,
+                            (o.vy * o.mass + otherParticle.vy * otherParticle.mass) / l
+                        );
+                    t.push(d);
+                }
+                var p = otherParticle.mass / (c * c);
+                // var p = otherParticle.mass * o.mass / (c * c); // Usar el signo de la masa para la fuerza
+                (r += (p * a) / c), (i += (p * n) / c);
+            }
+        (o.ax = r), (o.ay = i);
+    }
+    for (var m = 0; m < particleList.length; m++)
+        (particleList[m].vx += particleList[m].ax * h),
+            (particleList[m].vy += particleList[m].ay * h),
+            (particleList[m].x += particleList[m].vx * h + particleShift[0]),
+            (particleList[m].y += particleList[m].vy * h + particleShift[1]),
+            (particleList[m].collided || particleList[m].x < -50 || particleList[m].y < -50 || particleList[m].x > width + 50 || particleList[m].y > height + 50) && (particleList.splice(m, 1), m--);
+    Array.prototype.push.apply(particleList, t), (particleShift = [0, 0]);
+}
+function draw() {
+    // Limpiar el lienzo si los trails están desactivados
+    if (!showTrails) {
+        context.clearRect(0, 0, width, height);
+        trailPositions = []; // Reinicia las trayectorias si están desactivadas
+    }
+
+    // Dibujar las partículas
+    for (var t = 0; t < particleList.length; t++) {
+        var e = particleList[t];
+
+        context.beginPath();
+        context.arc(e.x, e.y, e.radius, 0, 2 * Math.PI); // Partícula dinámica
+        context.closePath();
+
+        // Agregar la posición actual a las trayectorias
+        if (showTrails) {
+            trailPositions.push({ x: e.x, y: e.y , radius: e.radius});
+            context.beginPath();
+            context.arc(e.x, e.y, e.radius, 0, 2 * Math.PI); // Partícula dinámica
+            context.closePath();
+            context.fillStyle = "rgba(0, 0, 0, 0.4)"; // Color translúcido para el trail
+            context.fill();
+        }
+
+        // Estilo dinámico para la partícula
+        var o = e.color;
+        if (e.radius < 3) {
+            context.fillStyle = "#" + o[3];
+        } else {
+            var r = context.createRadialGradient(e.x, e.y, 0.75 * e.radius, e.x, e.y, e.radius);
+            r.addColorStop(0, "rgba(" + o[0] + "," + o[1] + "," + o[2] + ",1.0)");
+            r.addColorStop(1, "rgba(" + o[0] + "," + o[1] + "," + o[2] + ",0)");
+            context.fillStyle = r;
+        }
+        context.fill();
+    }
+
+    // Dibujar las trayectorias
+    if (showTrails) {
+        for (var i = 0; i < trailPositions.length; i++) {
+            var trail = trailPositions[i];
+
+            context.beginPath();
+            context.arc(trail.x, trail.y, tinyParticleRadius / 2, 0, 2 * Math.PI);
+            context.closePath();
+            context.fillStyle = "rgba(255, 255, 255, 0.1)"; // Color translúcido para el trail
+            context.fill();
+        }
+    }
+
+    // Limitar la cantidad de posiciones en las trayectorias
+    if (trailPositions.length > 1000) {
+        trailPositions.splice(0, trailPositions.length - 1000);
+    }
 }
 
-function mouseDownListener(evt){
-	if(!onControlBox){
-		shiftDown = evt.shiftKey;
-		startCoords[0] = evt.clientX;
-		startCoords[1] = evt.clientY;
-		endCoords[0] = evt.clientX;
-		endCoords[1] = evt.clientY
-		window.addEventListener("mousemove", mouseMoveListener, false);
-		window.addEventListener("mouseup", mouseUpListener, false);
-	}
+var h = 0.005,
+    context,
+    particleList = new Array(),
+    context,
+    frametime,
+    starttime,
+    width,
+    height,
+    startCoords = [-1, -1],
+    endCoords = [-1, -1],
+    newMass = 1e3,
+    onControlBox = !1,
+    shiftDown = !1,
+    particleShift = [0, 0];
+
+function toggleTrails() {
+    showTrails = !showTrails; // Alterna entre verdadero y falso
 }
 
-function mouseMoveListener(evt){
-	endCoords[0] = evt.clientX;
-	endCoords[1] = evt.clientY;
+function saveSimulation() {
+    const simulationState = {
+        particles: particleList.map(particle => ({
+            mass: particle.mass,
+            x: particle.x,
+            y: particle.y,
+            vx: particle.vx,
+            vy: particle.vy,
+            ax: particle.ax,
+            ay: particle.ay,
+            radius: particle.radius,
+            color: particle.color
+        })),
+        trailsEnabled: showTrails
+    };
+
+    // Convertir a JSON y descargar como archivo
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(simulationState));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", "simulation_state.json");
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
 }
 
-function mouseUpListener(evt){
-	window.removeEventListener("mousemove", mouseMoveListener);
-	window.removeEventListener("mouseup", mouseUpListener);
-	//if we started and ended with no shift key
-	if(!evt.shiftKey && !shiftDown){
-		var p = new Particle(newMass,startCoords[0],startCoords[1],(endCoords[0]-startCoords[0]),(endCoords[1]-startCoords[1]));
-		particleList.push(p);
-	}
-	//if we started and ended with both shiftKeys
-	if(evt.shiftKey && shiftDown){
-		particleShift=[(endCoords[0]-startCoords[0]),(endCoords[1]-startCoords[1])];
-	}
-	startCoords = [-1,-1];
-	endCoords = [-1,-1];
+function loadSimulation(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const simulationState = JSON.parse(e.target.result);
+
+            // Restaurar partículas
+            particleList = simulationState.particles.map(particleData => {
+                const particle = new Particle(
+                    particleData.mass,
+                    particleData.x,
+                    particleData.y,
+                    particleData.vx,
+                    particleData.vy
+                );
+                particle.ax = particleData.ax;
+                particle.ay = particleData.ay;
+                particle.radius = particleData.radius;
+                particle.color = particleData.color;
+                return particle;
+            });
+
+            // Restaurar configuración de trails
+            showTrails = simulationState.trailsEnabled;
+
+            alert("Simulation loaded successfully!");
+        };
+        reader.readAsText(file);
+    }
 }
 
-function setNewMass(m){
-	console.log(m);
-	newMass = m;
-}
-
-function integrate(){
-	var newParticleList = new Array();
-	for(var a = 0; a < particleList.length; a++){
-		var particle = particleList[a];
-		var sum_ax = 0;					//sum of x accelerations
-		var sum_ay = 0;					//sum of y accelerations
-		for(var b = 0; b < particleList.length; b++){
-			otherParticle = particleList[b];
-			if((particle != otherParticle) && !particle.collided && !otherParticle.collided){
-				var dx = otherParticle.x - particle.x;
-				var dy = otherParticle.y - particle.y;
-				var displacementMagnitude = Math.sqrt(dx*dx + dy*dy);
-				if(displacementMagnitude < particle.radius/1.5 + otherParticle.radius/1.5){
-					particle.collided=true;
-					otherParticle.collided=true;
-					var totalMass = particle.mass+otherParticle.mass;
-					var newParticle = new Particle(totalMass,
-												   (particle.x*particle.mass + otherParticle.x*otherParticle.mass)/totalMass,
-												   (particle.y*particle.mass + otherParticle.y*otherParticle.mass)/totalMass,
-												   (particle.vx*particle.mass + otherParticle.vx*otherParticle.mass)/totalMass,
-												   (particle.vy*particle.mass + otherParticle.vy*otherParticle.mass)/totalMass);
-					newParticleList.push(newParticle);
-				}
-				var acceleration = otherParticle.mass/(displacementMagnitude*displacementMagnitude);
-				sum_ax += acceleration*dx/displacementMagnitude;
-				sum_ay += acceleration*dy/displacementMagnitude;
-			}
-		}
-		particle.ax = sum_ax;
-		particle.ay = sum_ay;
-	}
-	for(var i = 0; i < particleList.length; i++){
-		particleList[i].vx += particleList[i].ax*h;
-		particleList[i].vy += particleList[i].ay*h;
-		particleList[i].x += particleList[i].vx*h+particleShift[0];
-		particleList[i].y += particleList[i].vy*h+particleShift[1];
-		if(particleList[i].collided || particleList[i].x<-50 || particleList[i].y<-50
-						|| particleList[i].x>width+50 || particleList[i].y>height+50){
-			particleList.splice(i,1);
-			i--;
-		}
-	}
-	Array.prototype.push.apply(particleList,newParticleList);
-	particleShift = [0,0];
-}
-
-function draw(){
-	context.clearRect(0,0,width,height);
-	context.beginPath();
-	context.moveTo(startCoords[0],startCoords[1]);
-	context.lineTo(endCoords[0],endCoords[1]);
-	context.strokeStyle="blue";
-	context.strokeWidth=2;
-	context.stroke();
-	for(var i = 0; i < particleList.length; i++){
-		var p = particleList[i];
-		context.beginPath();
-		context.arc(p.x,p.y,p.radius,0,Math.PI*2);
-		context.closePath();
-		var c = p.color;
-		if(p.radius < 3){
-			context.fillStyle = "#"+c[3]; //hex color string
-		}else{
-			//I think this code is pretty equivalent to nowykurier's
-			var gradient = context.createRadialGradient(p.x,p.y,p.radius*.75,p.x,p.y,p.radius);
-			gradient.addColorStop(0,"rgba("+c[0]+","+c[1]+","+c[2]+",1.0)");
-			gradient.addColorStop(1,"rgba("+c[0]+","+c[1]+","+c[2]+",0)");
-			context.fillStyle=gradient;
-		}
-		//context.strokeStyle = "#"+Math.round(p.color).toString(16);		//looks better without the stroke
-		//context.stroke();
-		context.fill();
-	}
-}
