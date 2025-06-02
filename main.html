@@ -85,6 +85,14 @@
 			var newParticleSize = 100;
 			var currentParticleType = 'matter'; // 'matter' or 'antimatter'
 
+            // Asegura que init() y start() se llamen después de que los scripts estén cargados.
+            window.onload = function() {
+                // `init()` es una función definida en Gravity.min.js
+                // `start()` es una función definida en este mismo script
+                init();
+                start();
+            };
+
 			function start(){
 				if(interval == -1){
 					interval = window.setInterval("main();",20);
@@ -106,20 +114,160 @@
 					var particle = new Particle(1000, width/2+x, height/2+y, y*(mag/70), -x*(mag/70), 'matter');
 					particleList.push(particle);
 				}
-				ga('send', 'event', 'Gravity.js', 'Protodisk');
+				// The original code had ga('send', ...), which is Google Analytics.
+				// This might not be available or desired in this environment.
+				// Keeping it commented out or removed is safer.
+				// ga('send', 'event', 'Gravity.js', 'Protodisk');
 			}
 
 			function setSize(size){
 				document.getElementById("mass").value=size.toExponential(1).replace("+","");
+				// `setNewMass()` es una función definida en Gravity.min.js
 				setNewMass(size);
 			}
 
 			function clearCanvas(){
 				particleList = [];
 			}
+
+			// Function to set predefined celestial body masses
+			function setCelestialBodyMass(body){
+				let mass;
+				switch(body){
+					case 'sun':
+						mass = 1.989e6; // A scaled mass for the Sun, adjust as needed for simulation
+						break;
+					case 'mercury':
+						mass = 3.301e2; // Scaled mass for Mercury
+						break;
+					case 'venus':
+						mass = 4.867e3; // Scaled mass for Venus
+						break;
+					case 'earth':
+						mass = 5.972e3; // Scaled mass for Earth
+						break;
+					case 'mars':
+						mass = 6.417e2; // Scaled mass for Mars
+						break;
+					case 'jupiter':
+						mass = 1.898e6; // Scaled mass for Jupiter
+						break;
+					case 'saturn':
+						mass = 5.683e5; // Scaled mass for Saturn
+						break;
+					case 'uranus':
+						mass = 8.681e4; // Scaled mass for Uranus
+						break;
+					case 'neptune':
+						mass = 1.024e5; // Scaled mass for Neptune
+						break;
+					default:
+						mass = 1e3; // Default to 'Small' if unknown
+				}
+				setSize(mass);
+			}
+
+			// Variable y función para alternar la visibilidad del campo gravitatorio.
+			// La lógica principal de `toggleGravityField` reside en Gravity.min.js.
+			// Aquí solo se llama a esa función y se actualiza el texto del botón.
+			var gravityFieldEnabled = false; // Moved to Gravity.min.js
+			function toggleGravityField(){
+				// This function will be defined in Gravity.min.js
+				// For now, it will simply toggle the state
+				gravityFieldEnabled = !gravityFieldEnabled;
+				document.getElementById("gravityFieldBtn").innerHTML = gravityFieldEnabled ? "Hide Field" : "Show Field";
+			}
+
+            function placeSolarSystem() {
+                clearCanvas();
+                // `width` y `height` son variables globales definidas en Gravity.min.js
+                var centerX = width / 2;
+                var centerY = height / 2;
+
+                // Escalas ajustadas para mejor visibilidad y comportamiento de la simulación.
+                // Puedes ajustar estos valores para cambiar el tamaño y la velocidad del sistema solar.
+                var distanceScale = 0.5;  // Aumentado para que los planetas sean más visibles
+                var massScale = 1e-21;     // Mantener la escala de masa para que el Sol sea dominante
+                // velocityScale ya no se usa directamente para escalar velocidades reales,
+                // sino que la velocidad orbital se calcula.
+
+                // Datos del sistema solar (masa, distancia media en millones de km)
+                var solarSystem = [
+                    // Sol (masa enorme, en el centro)
+                    {
+                        name: "Sun",
+                        mass: 1.989e30,
+                        distance: 0, // Distancia desde el centro del sistema
+                        color: [255, 255, 0] // Amarillo
+                    },
+                    // Planetas (masa, distancia media en millones de km)
+                    // Las velocidades del mundo real se eliminan ya que las calcularemos en función del sistema escalado.
+                    { name: "Mercury", mass: 3.30e23, distance: 57.9, color: [169, 169, 169] }, // Gris
+                    { name: "Venus", mass: 4.87e24, distance: 108.2, color: [255, 165, 0] },   // Naranja
+                    { name: "Earth", mass: 5.97e24, distance: 149.6, color: [0, 0, 255] },     // Azul
+                    { name: "Mars", mass: 6.42e23, distance: 228.0, color: [255, 0, 0] },       // Rojo
+                    { name: "Jupiter", mass: 1.90e27, distance: 778.5, color: [255, 223, 0] },  // Dorado
+                    { name: "Saturn", mass: 5.68e26, distance: 1432.0, color: [210, 180, 140] }, // Canela
+                    { name: "Uranus", mass: 8.68e25, distance: 2867.0, color: [173, 216, 230] }, // Azul claro
+                    { name: "Neptune", mass: 1.02e26, distance: 4515.0, color: [65, 105, 225] }  // Azul real
+                ];
+
+                // Obtener la masa escalada del Sol primero
+                var sunMassScaled = solarSystem[0].mass * massScale;
+
+                // Crear objetos del sistema solar
+                for (var i = 0; i < solarSystem.length; i++) {
+                    var body = solarSystem[i];
+                    var mass = body.mass * massScale;
+                    var distance = body.distance * distanceScale; // Distancia escalada
+
+                    var x = centerX;
+                    var y = centerY;
+                    var vx = 0;
+                    var vy = 0; // Inicializar velocidades a 0
+
+                    if (body.name === "Sun") {
+                        // El Sol comienza en el centro con una velocidad inicial muy pequeña para estabilidad
+                        vx = 0.01; // Pequeño "empuje" para evitar un estado perfectamente estático
+                        vy = -0.01;
+                    } else {
+                        // Calcular la magnitud de la velocidad orbital requerida para una órbita circular alrededor del Sol
+                        // v = sqrt(G * M_sol / r)
+                        // En nuestra simulación, G es efectivamente 1.
+                        // Necesitamos asegurarnos de que la distancia no sea cero para este cálculo.
+                        if (distance > 0) {
+                            var orbitalVelocityMagnitude = Math.sqrt(sunMassScaled / distance);
+
+                            // Para que los planetas no se superpongan al inicio, los distribuimos aleatoriamente
+                            var initialAngle = Math.random() * 2 * Math.PI;
+                            x = centerX + distance * Math.cos(initialAngle);
+                            y = centerY + distance * Math.sin(initialAngle);
+
+                            // Velocidad inicial tangencial a la órbita.
+                            // vx = -v * sin(ángulo), vy = v * cos(ángulo)
+                            vx = -orbitalVelocityMagnitude * Math.sin(initialAngle);
+                            vy = orbitalVelocityMagnitude * Math.cos(initialAngle);
+                        }
+                    }
+
+                    // Crear partícula
+                    // `Particle` es el constructor de partículas definido en Particle.min.js
+                    var particle = new Particle(mass, x, y, vx, vy, 'matter', body.name);
+
+                    // Asignar color personalizado si existe
+                    if (body.color) {
+                        particle.color = body.color;
+                        // Recalcular color[3] para el nuevo color personalizado (formato hexadecimal)
+                        particle.color[3] = (particle.color[0] << 16 | particle.color[1] << 8 | particle.color[2]).toString(16);
+                    }
+
+                    // `particleList` es una variable global definida en Gravity.min.js
+                    particleList.push(particle);
+                }
+            }
 		</script>
 	</head>
-	<body onload = "init();start();" style="background-color:black">
+	<body style="background-color:black">
 		<div class="noselect">
 			Inspired by the classic <a href="http://www.nowykurier.com/toys/gravity/gravity.html">Gravity Toy</a> and rewritten in Javascript.</br>
 			Click and drag to add new particles. Hold shift and drag to translate.</br></br>
@@ -131,13 +279,25 @@
 					<tr><button onclick="setSize(10000)">Medium</button></tr></br>
 					<tr><button onclick="setSize(100000)">Huge</button></tr></br>
 					<tr><button onclick="setSize(1000000)">Enormous</button></tr>
+					<tr><button onclick="setCelestialBodyMass('sun')">Sun</button></tr>
+					<tr><button onclick="setCelestialBodyMass('mercury')">Mercury</button></tr>
+					<tr><button onclick="setCelestialBodyMass('venus')">Venus</button></tr>
+					<tr><button onclick="setCelestialBodyMass('earth')">Earth</button></tr>
+					<tr><button onclick="setCelestialBodyMass('mars')">Mars</button></tr>
+					<tr><button onclick="setCelestialBodyMass('jupiter')">Jupiter</button></tr>
+					<tr><button onclick="setCelestialBodyMass('saturn')">Saturn</button></tr>
+					<tr><button onclick="setCelestialBodyMass('uranus')">Uranus</button></tr>
+					<tr><button onclick="setCelestialBodyMass('neptune')">Neptune</button></tr>
 				</table>
 				<button onclick="start()">Start</button></br>
 				<button onclick="stop()">Stop</button></br>
 				<button onclick="generateProto()">Protodisk</button></br>
 				<button onclick="clearCanvas()">Clear</button></br>
 				<button onclick="toggleTrails()">Toggle Trails</button></br>
-				<button id="particleTypeBtn" onclick="toggleParticleType()">Matter</button>
+				<button id="particleTypeBtn" onclick="toggleParticleType()">Matter</button></br>
+				<button id="gravityFieldBtn" onclick="toggleGravityField()">Show Field</button></br>
+				<button id="toggleNamesBtn" onclick="toggleParticleNames()">Show Names</button></br>
+				<button onclick="placeSolarSystem()">Solar System</button>
 			</div>
 		</div>
 		<canvas id="canvas" style="z-index:-1;position:absolute;left: 0px;top: 0px;"></canvas>
