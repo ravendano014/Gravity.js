@@ -83,6 +83,7 @@
 		<script>
 			var interval = -1;
 			var newParticleSize = 100;
+			var currentParticleType = 'matter'; // 'matter' or 'antimatter'
 
 			function start(){
 				if(interval == -1){
@@ -102,7 +103,7 @@
 					var x = (100*rand2)*Math.cos(rand);
 					var y = (100*rand2)*Math.sin(rand);
 					var mag = Math.sqrt(x*x+y*y);
-					var particle = new Particle(1000, width/2+x, height/2+y, y*(mag/70), -x*(mag/70));
+					var particle = new Particle(1000, width/2+x, height/2+y, y*(mag/70), -x*(mag/70), 'matter');
 					particleList.push(particle);
 				}
 				ga('send', 'event', 'Gravity.js', 'Protodisk');
@@ -117,20 +118,11 @@
 				particleList = [];
 			}
 		</script>
-		<script>
-  			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  			(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  			m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  			})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  			ga('create', 'UA-61036065-1', 'auto');
-			ga('send', 'pageview');
-		</script>
 	</head>
 	<body onload = "init();start();" style="background-color:black">
 		<div class="noselect">
 			Inspired by the classic <a href="http://www.nowykurier.com/toys/gravity/gravity.html">Gravity Toy</a> and rewritten in Javascript.</br>
-			Click and drag to add new particles. Hold shift and drag to translate. (Rightclick for negative mass)</br></br>
+			Click and drag to add new particles. Hold shift and drag to translate.</br></br>
 			<div id="controlbox" style="z-index:4">
 				<table>
 					<tr>Mass:<input type="text" value="1.0e3" class="txt" style="width:50px;" id="mass"></tr></br>
@@ -139,15 +131,13 @@
 					<tr><button onclick="setSize(10000)">Medium</button></tr></br>
 					<tr><button onclick="setSize(100000)">Huge</button></tr></br>
 					<tr><button onclick="setSize(1000000)">Enormous</button></tr>
-					<tr><button onclick="toggleTrails()">Toggle Trails</button></tr></br>
 				</table>
 				<button onclick="start()">Start</button></br>
 				<button onclick="stop()">Stop</button></br>
 				<button onclick="generateProto()">Protodisk</button></br>
 				<button onclick="clearCanvas()">Clear</button></br>
-				<button onclick="saveSimulation()">Save Simulation</button></br>
-				<input type="file" id="loadSimulationInput" style="display:none;" onchange="loadSimulation(event)">
-				<button onclick="document.getElementById('loadSimulationInput').click()">Load Simulation</button></br>
+				<button onclick="toggleTrails()">Toggle Trails</button></br>
+				<button id="particleTypeBtn" onclick="toggleParticleType()">Matter</button>
 			</div>
 		</div>
 		<canvas id="canvas" style="z-index:-1;position:absolute;left: 0px;top: 0px;"></canvas>
