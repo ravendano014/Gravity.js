@@ -3,6 +3,7 @@
 		<title>Gravity Toy</title>
 		<script src="Gravity.min.js"></script>
 		<script src="Particle.min.js"></script>
+		<script src="Magnetosphere.min.js"></script>
 		<style>
 			body {
 				color: #ffffff;
@@ -91,6 +92,12 @@
                 // `start()` es una función definida en este mismo script
                 init();
                 start();
+                // Initialize magnetosphere button text
+                document.getElementById("toggleMagnetospheresBtn").innerHTML = showMagnetospheres ? "Hide Magnetospheres" : "Show Magnetospheres";
+                // Initialize orbit button text
+                document.getElementById("toggleOrbitsBtn").innerHTML = showOrbits ? "Hide Orbits" : "Show Orbits";
+                // NEW: Initialize gravity well button text
+                document.getElementById("toggleGravityWellsBtn").innerHTML = showGravityWells ? "Hide Gravity Wells" : "Show Gravity Wells";
             };
 
 			function start(){
@@ -178,6 +185,33 @@
 				document.getElementById("gravityFieldBtn").innerHTML = gravityFieldEnabled ? "Hide Field" : "Show Field";
 			}
 
+            // Function to toggle magnetospheres and update button text
+            function toggleMagnetospheresAndButton() {
+                // Call the function defined in Gravity.min.js
+                toggleMagnetospheres();
+
+                // Update button text
+                document.getElementById("toggleMagnetospheresBtn").innerHTML = showMagnetospheres ? "Hide Magnetospheres" : "Show Magnetospheres";
+            }
+
+            // Function to toggle orbits and update button text
+            function toggleOrbitsAndButton() {
+                // Call the function defined in Gravity.min.js
+                toggleOrbits();
+
+                // Update button text
+                document.getElementById("toggleOrbitsBtn").innerHTML = showOrbits ? "Hide Orbits" : "Show Orbits";
+            }
+
+            // NEW: Function to toggle gravity wells and update button text
+            function toggleGravityWellsAndButton() {
+                // Call the function defined in Gravity.min.js
+                toggleGravityWells();
+
+                // Update button text
+                document.getElementById("toggleGravityWellsBtn").innerHTML = showGravityWells ? "Hide Gravity Wells" : "Show Gravity Wells";
+            }
+
             function placeSolarSystem() {
                 clearCanvas();
                 // `width` y `height` son variables globales definidas en Gravity.min.js
@@ -202,14 +236,14 @@
                     },
                     // Planetas (masa, distancia media en millones de km)
                     // Las velocidades del mundo real se eliminan ya que las calcularemos en función del sistema escalado.
-                    { name: "Mercury", mass: 3.30e23, distance: 57.9, color: [169, 169, 169] }, // Gris
-                    { name: "Venus", mass: 4.87e24, distance: 108.2, color: [255, 165, 0] },   // Naranja
-                    { name: "Earth", mass: 5.97e24, distance: 149.6, color: [0, 0, 255] },     // Azul
-                    { name: "Mars", mass: 6.42e23, distance: 228.0, color: [255, 0, 0] },       // Rojo
-                    { name: "Jupiter", mass: 1.90e27, distance: 778.5, color: [255, 223, 0] },  // Dorado
-                    { name: "Saturn", mass: 5.68e26, distance: 1432.0, color: [210, 180, 140] }, // Canela
-                    { name: "Uranus", mass: 8.68e25, distance: 2867.0, color: [173, 216, 230] }, // Azul claro
-                    { name: "Neptune", mass: 1.02e26, distance: 4515.0, color: [65, 105, 225] }  // Azul real
+                    { name: "Mercury", mass: 3.30e23, distance: 57.9 * 1.5, color: [169, 169, 169] }, // Gris
+                    { name: "Venus", mass: 4.87e24, distance: 108.2 * 1.5, color: [255, 165, 0] },   // Naranja
+                    { name: "Earth", mass: 5.97e24, distance: 149.6 * 1.5, color: [0, 0, 255] },     // Azul
+                    { name: "Mars", mass: 6.42e23, distance: 228.0 * 1.5, color: [255, 0, 0] },       // Rojo
+                    { name: "Jupiter", mass: 1.90e27, distance: 778.5 * 1.5, color: [255, 223, 0] },  // Dorado
+                    { name: "Saturn", mass: 5.68e26, distance: 1432.0 * 1.5, color: [210, 180, 140] }, // Canela
+                    { name: "Uranus", mass: 8.68e25, distance: 2867.0 * 1.5, color: [173, 216, 230] }, // Azul claro
+                    { name: "Neptune", mass: 1.02e26, distance: 4515.0 * 1.5, color: [65, 105, 225] }  // Azul real
                 ];
 
                 // Obtener la masa escalada del Sol primero
@@ -244,7 +278,7 @@
                             y = centerY + distance * Math.sin(initialAngle);
 
                             // Velocidad inicial tangencial a la órbita.
-                            // vx = -v * sin(ángulo), vy = v * cos(ángulo)
+                            // vx = -orbitalVelocityMagnitude * sin(ángulo), vy = orbitalVelocityMagnitude * cos(ángulo)
                             vx = -orbitalVelocityMagnitude * Math.sin(initialAngle);
                             vy = orbitalVelocityMagnitude * Math.cos(initialAngle);
                         }
@@ -297,7 +331,9 @@
 				<button id="particleTypeBtn" onclick="toggleParticleType()">Matter</button></br>
 				<button id="gravityFieldBtn" onclick="toggleGravityField()">Show Field</button></br>
 				<button id="toggleNamesBtn" onclick="toggleParticleNames()">Show Names</button></br>
-				<button onclick="placeSolarSystem()">Solar System</button>
+				<button id="toggleMagnetospheresBtn" onclick="toggleMagnetospheresAndButton()">Show Magnetospheres</button></br>
+				<button id="toggleOrbitsBtn" onclick="toggleOrbitsAndButton()">Show Orbits</button></br>
+				<button id="toggleGravityWellsBtn" onclick="toggleGravityWellsAndButton()">Show Gravity Wells</button></br> <button onclick="placeSolarSystem()">Solar System</button>
 			</div>
 		</div>
 		<canvas id="canvas" style="z-index:-1;position:absolute;left: 0px;top: 0px;"></canvas>
