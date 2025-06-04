@@ -472,6 +472,255 @@
                 }
             }
 
+			        // NEW: Generate a random stable system with multiple moons
+					function generateRandomSystem() {
+            clearCanvas();
+            
+            var systemSize = document.getElementById("systemSize").value;
+            var numBodies;
+            
+            switch(systemSize) {
+                case 'small': numBodies = 3 + Math.floor(Math.random() * 3); break;
+                case 'medium': numBodies = 5 + Math.floor(Math.random() * 4); break;
+                case 'large': numBodies = 8 + Math.floor(Math.random() * 5); break;
+                default: numBodies = 5;
+            }
+            
+            var centerX = width / 2;
+            var centerY = height / 2;
+            
+            // Create central star
+            var starMass = 1e6 + Math.random() * 5e6;
+            var starColors = [
+                [255, 255, 200], // Yellow
+                [255, 200, 150], // Orange
+                [200, 200, 255], // Blue
+                [255, 150, 150]  // Red
+            ];
+            var starColor = starColors[Math.floor(Math.random() * starColors.length)];
+            
+            var star = new Particle(starMass, centerX, centerY, 0, 0, 'matter', 'Central Star');
+            star.color = starColor;
+            star.color[3] = (star.color[0] << 16 | star.color[1] << 8 | star.color[2]).toString(16);
+            particleList.push(star);
+            
+            // Create orbiting bodies with potential moons
+            var planetNames = ['Kepler', 'Gliese', 'Proxima', 'TRAPPIST', 'TOI', 'K2', 'WASP', 'HAT'];
+            var moonNames = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta'];
+            
+            for (var i = 1; i < numBodies; i++) {
+                var distance = 150 + i * (80 + Math.random() * 40);
+                var angle = Math.random() * 2 * Math.PI;
+                
+                var planetMass = 1e3 + Math.random() * 1e5;
+                var x = centerX + distance * Math.cos(angle);
+                var y = centerY + distance * Math.sin(angle);
+                
+                // Calculate orbital velocity
+                var orbitalSpeed = Math.sqrt(starMass / distance);
+                var vx = -orbitalSpeed * Math.sin(angle);
+                var vy = orbitalSpeed * Math.cos(angle);
+                
+                var planetName = planetNames[Math.floor(Math.random() * planetNames.length)] + '-' + i;
+                var planet = new Particle(planetMass, x, y, vx, vy, 'matter', planetName);
+                
+                // Random planet colors
+                var planetColors = [
+                    [100, 150, 255], // Blue
+                    [255, 100, 100], // Red
+                    [100, 255, 100], // Green
+                    [255, 255, 100], // Yellow
+                    [200, 100, 255], // Purple
+                    [255, 150, 100]  // Orange
+                ];
+                planet.color = planetColors[Math.floor(Math.random() * planetColors.length)];
+                planet.color[3] = (planet.color[0] << 16 | planet.color[1] << 8 | planet.color[2]).toString(16);
+                
+                particleList.push(planet);
+                
+                // Add moons to some planets (30-60% chance)
+                if (Math.random() > 0.4) {
+                    var numMoons = 1 + Math.floor(Math.random() * 3); // 1-3 moons
+                    
+                    for (var j = 0; j < numMoons; j++) {
+                        var moonDistance = planet.radius * 15 + 20 + j * 25;
+                        var moonAngle = Math.random() * 2 * Math.PI;
+                        var moonMass = planetMass * (0.01 + Math.random() * 0.05); // 1-6% of planet mass
+                        
+                        var moonX = planet.x + moonDistance * Math.cos(moonAngle);
+                        var moonY = planet.y + moonDistance * Math.sin(moonAngle);
+                        
+                        var moonOrbitalSpeed = Math.sqrt(planetMass / moonDistance);
+                        var moonVx = planet.vx - moonOrbitalSpeed * Math.sin(moonAngle);
+                        var moonVy = planet.vy + moonOrbitalSpeed * Math.cos(moonAngle);
+                        
+                        var moonName = planetName + '-' + moonNames[j % moonNames.length];
+                        var moon = new Particle(moonMass, moonX, moonY, moonVx, moonVy, 'matter', moonName);
+                        
+                        // Moon colors (greyish)
+                        moon.color = [150 + Math.random() * 50, 150 + Math.random() * 50, 150 + Math.random() * 50];
+                        moon.color[3] = (moon.color[0] << 16 | moon.color[1] << 8 | moon.color[2]).toString(16);
+                        
+                        particleList.push(moon);
+                    }
+                }
+            }
+        }
+
+        // NEW: Generate multiple random systems
+        function generateRandomMultiSystem() {
+            clearCanvas();
+            
+            var numSystems = 2 + Math.floor(Math.random() * 2); // 2-3 systems
+            var systemCenters = [];
+            
+            // Generate system centers avoiding overlap
+            for (var s = 0; s < numSystems; s++) {
+                var attempts = 0;
+                var centerX, centerY;
+                var validPosition = false;
+                
+                while (!validPosition && attempts < 20) {
+                    centerX = width * 0.2 + Math.random() * width * 0.6;
+                    centerY = height * 0.2 + Math.random() * height * 0.6;
+                    
+                    validPosition = true;
+                    for (var c = 0; c < systemCenters.length; c++) {
+                        var dx = centerX - systemCenters[c].x;
+                        var dy = centerY - systemCenters[c].y;
+                        var distance = Math.sqrt(dx * dx + dy * dy);
+                        if (distance < 300) {
+                            validPosition = false;
+                            break;
+                        }
+                    }
+                    attempts++;
+                }
+                
+                if (validPosition) {
+                    systemCenters.push({x: centerX, y: centerY});
+                }
+            }
+            
+            // Generate each system
+            for (var s = 0; s < systemCenters.length; s++) {
+                var center = systemCenters[s];
+                var numBodies = 3 + Math.floor(Math.random() * 4);
+                
+                // Create central star
+                var starMass = 5e5 + Math.random() * 2e6;
+                var star = new Particle(starMass, center.x, center.y, Math.random() * 10 - 5, Math.random() * 10 - 5, 'matter', 'Star-' + (s + 1));
+                
+                var starColors = [[255, 255, 200], [255, 200, 150], [200, 200, 255]];
+                star.color = starColors[Math.floor(Math.random() * starColors.length)];
+                star.color[3] = (star.color[0] << 16 | star.color[1] << 8 | star.color[2]).toString(16);
+                
+                particleList.push(star);
+                
+                // Create planets with moons
+                for (var i = 1; i < numBodies; i++) {
+                    var distance = 80 + i * 50;
+                    var angle = Math.random() * 2 * Math.PI;
+                    
+                    var planetMass = 1e3 + Math.random() * 5e4;
+                    var x = center.x + distance * Math.cos(angle);
+                    var y = center.y + distance * Math.sin(angle);
+                    
+                    var orbitalSpeed = Math.sqrt(starMass / distance);
+                    var vx = star.vx - orbitalSpeed * Math.sin(angle);
+                    var vy = star.vy + orbitalSpeed * Math.cos(angle);
+                    
+                    var planet = new Particle(planetMass, x, y, vx, vy, 'matter', 'Planet-' + (s + 1) + '-' + i);
+                    
+                    var planetColors = [[100, 150, 255], [255, 100, 100], [100, 255, 100], [255, 255, 100]];
+                    planet.color = planetColors[Math.floor(Math.random() * planetColors.length)];
+                    planet.color[3] = (planet.color[0] << 16 | planet.color[1] << 8 | planet.color[2]).toString(16);
+                    
+                    particleList.push(planet);
+                    
+                    // Add moons
+                    if (Math.random() > 0.5) {
+                        var numMoons = 1 + Math.floor(Math.random() * 2);
+                        
+                        for (var j = 0; j < numMoons; j++) {
+                            var moonDistance = planet.radius * 10 + 15 + j * 20;
+                            var moonAngle = Math.random() * 2 * Math.PI;
+                            var moonMass = planetMass * (0.02 + Math.random() * 0.04);
+                            
+                            var moonX = planet.x + moonDistance * Math.cos(moonAngle);
+                            var moonY = planet.y + moonDistance * Math.sin(moonAngle);
+                            
+                            var moonOrbitalSpeed = Math.sqrt(planetMass / moonDistance);
+                            var moonVx = planet.vx - moonOrbitalSpeed * Math.sin(moonAngle);
+                            var moonVy = planet.vy + moonOrbitalSpeed * Math.cos(moonAngle);
+                            
+                            var moon = new Particle(moonMass, moonX, moonY, moonVx, moonVy, 'matter', 'Moon-' + (s + 1) + '-' + i + '-' + (j + 1));
+                            moon.color = [120, 120, 120];
+                            moon.color[3] = (moon.color[0] << 16 | moon.color[1] << 8 | moon.color[2]).toString(16);
+                            
+                            particleList.push(moon);
+                        }
+                    }
+                }
+            }
+        }
+
+		function generateMultiMoonSystem() {
+		clearCanvas();
+
+		const numPlanets = 5;
+		const moonMass = 5e2;
+		const miniMoonMass = 1e1;
+
+		const centerX = width / 2;
+		const centerY = height / 2;
+
+		for (let i = 0; i < numPlanets; i++) {
+			const angle = (2 * Math.PI / numPlanets) * i;
+			const distanceFromCenter = 300 + Math.random() * 200;
+
+			const x = centerX + distanceFromCenter * Math.cos(angle);
+			const y = centerY + distanceFromCenter * Math.sin(angle);
+
+			const planetMass = 1e4 + Math.random() * 1e4;
+			const planet = new Particle(planetMass, x, y, -Math.sin(angle) * 0.5, Math.cos(angle) * 0.5, 'matter', `Planet ${i + 1}`);
+			particleList.push(planet);
+
+			const numMoons = 2 + Math.floor(Math.random() * 3); // 2–4 lunas
+			for (let j = 0; j < numMoons; j++) {
+				const moonAngle = Math.random() * 2 * Math.PI;
+				const moonDistance = 40 + Math.random() * 40;
+
+				const moonX = planet.x + moonDistance * Math.cos(moonAngle);
+				const moonY = planet.y + moonDistance * Math.sin(moonAngle);
+
+				const orbitalSpeed = Math.sqrt(planet.mass / moonDistance);
+				const moonVx = -orbitalSpeed * Math.sin(moonAngle) + planet.vx;
+				const moonVy = orbitalSpeed * Math.cos(moonAngle) + planet.vy;
+
+				const moon = new Particle(moonMass, moonX, moonY, moonVx, moonVy, 'matter', `Moon ${i + 1}.${j + 1}`);
+				particleList.push(moon);
+
+				// 50% chance of mini-moon
+				if (Math.random() < 0.5) {
+					const miniMoonAngle = Math.random() * 2 * Math.PI;
+					const miniMoonDistance = 10 + Math.random() * 10;
+
+					const miniMoonX = moon.x + miniMoonDistance * Math.cos(miniMoonAngle);
+					const miniMoonY = moon.y + miniMoonDistance * Math.sin(miniMoonAngle);
+
+					const miniOrbitalSpeed = Math.sqrt(moon.mass / miniMoonDistance);
+					const miniMoonVx = -miniOrbitalSpeed * Math.sin(miniMoonAngle) + moon.vx;
+					const miniMoonVy = miniOrbitalSpeed * Math.cos(miniMoonAngle) + moon.vy;
+
+					const miniMoon = new Particle(miniMoonMass, miniMoonX, miniMoonY, miniMoonVx, miniMoonVy, 'matter', `MiniMoon ${i + 1}.${j + 1}`);
+					particleList.push(miniMoon);
+				}
+			}
+		}
+	}
+
+
 		</script>
 	</head>
 	<body style="background-color:black">
@@ -487,6 +736,22 @@
 					<tr><button onclick="setSize(10000)">Medium</button></tr></br>
 					<tr><button onclick="setSize(100000)">Huge</button></tr></br>
 					<tr><button onclick="setSize(1000000)">Enormous</button></tr>
+					<!-- NEW: Random System Generation -->
+					<tr><hr style="border-color: #ffffff; margin: 10px 0;"></tr>
+					<tr><button onclick="generateRandomSystem()">Random System</button></tr><br>
+					<tr><button onclick="generateRandomMultiSystem()">Multi-System Random</button></tr><br>
+					<tr><button onclick="generateMultiMoonSystem()">Multi Moon System</button></tr><br>
+					
+					<tr>
+						<td><span class="seltxt">System Size:</span></td>
+						<td>
+							<select id="systemSize">
+								<option value="small">Small (3-5 bodies)</option>
+								<option value="medium" selected>Medium (5-8 bodies)</option>
+								<option value="large">Large (8-12 bodies)</option>
+							</select>
+						</td>
+					</tr>
                     <tr>
                         <td><span class="seltxt">Celestial Body Mass:</span></td>
                         <td>
