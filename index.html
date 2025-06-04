@@ -720,7 +720,113 @@
 		}
 	}
 
+	function generateBinarySystem() {
+		clearCanvas();
 
+		var centerX = width / 2;
+		var centerY = height / 2;
+		var binaryDistance = 100;
+
+		// Create binary stars
+		var star1Mass = 8e5 + Math.random() * 2e6;
+		var star2Mass = 8e5 + Math.random() * 2e6;
+
+		var totalMass = star1Mass + star2Mass;
+		var star1Distance = binaryDistance * star2Mass / totalMass;
+		var star2Distance = binaryDistance * star1Mass / totalMass;
+
+		// Initial positions
+		var star1X = centerX - star1Distance;
+		var star1Y = centerY;
+		var star2X = centerX + star2Distance;
+		var star2Y = centerY;
+
+		// Calculate orbital velocities for a stable orbit
+		// v = sqrt(G * M / r) where G is effectively 1 in this simulation
+		// For a binary system, v1 = sqrt(G * M2^2 / (M1+M2) / r_total)
+		// and v2 = sqrt(G * M1^2 / (M1+M2) / r_total)
+		// Or more simply, v_relative = sqrt(G * (M1+M2) / r_total)
+		// v1 = v_relative * M2 / (M1+M2)
+		// v2 = v_relative * M1 / (M1+M2)
+
+		var relativeOrbitalSpeed = Math.sqrt(totalMass / binaryDistance);
+
+		var star1Vx = 0;
+		var star1Vy = relativeOrbitalSpeed * (star2Mass / totalMass); // Orbiting around common barycenter
+
+		var star2Vx = 0;
+		var star2Vy = -relativeOrbitalSpeed * (star1Mass / totalMass); // Orbiting in opposite direction
+
+		// Randomize initial angle for variety
+		var initialAngle = Math.random() * 2 * Math.PI;
+
+		// Rotate positions
+		var cosAngle = Math.cos(initialAngle);
+		var sinAngle = Math.sin(initialAngle);
+
+		var rotatedStar1X = centerX + (star1X - centerX) * cosAngle - (star1Y - centerY) * sinAngle;
+		var rotatedStar1Y = centerY + (star1X - centerX) * sinAngle + (star1Y - centerY) * cosAngle;
+
+		var rotatedStar2X = centerX + (star2X - centerX) * cosAngle - (star2Y - centerY) * sinAngle;
+		var rotatedStar2Y = centerY + (star2X - centerX) * sinAngle + (star2Y - centerY) * cosAngle;
+
+		// Rotate velocities
+		var rotatedStar1Vx = star1Vx * cosAngle - star1Vy * sinAngle;
+		var rotatedStar1Vy = star1Vx * sinAngle + star1Vy * cosAngle;
+
+		var rotatedStar2Vx = star2Vx * cosAngle - star2Vy * sinAngle;
+		var rotatedStar2Vy = star2Vx * sinAngle + star2Vy * cosAngle;
+
+		var starColors = [
+			[255, 255, 200], // Yellowish
+			[255, 200, 150], // Orange
+			[200, 200, 255], // Bluish
+			[255, 150, 150]  // Reddish
+		];
+
+		var color1 = starColors[Math.floor(Math.random() * starColors.length)];
+		var color2 = starColors[Math.floor(Math.random() * starColors.length)];
+
+
+		var star1 = new Particle(star1Mass, rotatedStar1X, rotatedStar1Y, rotatedStar1Vx, rotatedStar1Vy, 'matter', 'Binary Star 1');
+		star1.color = color1;
+		star1.color[3] = (star1.color[0] << 16 | star1.color[1] << 8 | star1.color[2]).toString(16);
+		particleList.push(star1);
+
+		var star2 = new Particle(star2Mass, rotatedStar2X, rotatedStar2Y, rotatedStar2Vx, rotatedStar2Vy, 'matter', 'Binary Star 2');
+		star2.color = color2;
+		star2.color[3] = (star2.color[0] << 16 | star2.color[1] << 8 | star2.color[2]).toString(16);
+		particleList.push(star2);
+
+		// Optional: Add some orbiting planets around the binary system's barycenter
+			const numPlanets = 0 + Math.floor(Math.random() * 3); // 0-2 planets
+			for (let i = 0; i < numPlanets; i++) {
+				const planetDistance = binaryDistance * 2 + i * 80 + Math.random() * 50;
+				const planetAngle = Math.random() * 2 * Math.PI;
+				const planetMass = 1e3 + Math.random() * 5e3;
+
+				const planetX = centerX + planetDistance * Math.cos(planetAngle);
+				const planetY = centerY + planetDistance * Math.sin(planetAngle);
+
+				const systemMassForOrbit = totalMass; // Use total mass of binary for outer planets
+				const planetOrbitalSpeed = Math.sqrt(systemMassForOrbit / planetDistance);
+				const planetVx = -planetOrbitalSpeed * Math.sin(planetAngle);
+				const planetVy = planetOrbitalSpeed * Math.cos(planetAngle);
+
+				const planetColors = [
+					[100, 150, 255], // Blue
+					[255, 100, 100], // Red
+					[100, 255, 100], // Green
+					[255, 255, 100]  // Yellow
+				];
+				var planetColor = planetColors[Math.floor(Math.random() * planetColors.length)];
+
+				var planet = new Particle(planetMass, planetX, planetY, planetVx, planetVy, 'matter', `Exoplanet ${i + 1}`);
+				planet.color = planetColor;
+				planet.color[3] = (planet.color[0] << 16 | planet.color[1] << 8 | planet.color[2]).toString(16);
+				particleList.push(planet);
+			}
+		}
 		</script>
 	</head>
 	<body style="background-color:black">
@@ -738,10 +844,10 @@
 					<tr><button onclick="setSize(1000000)">Enormous</button></tr>
 					<!-- NEW: Random System Generation -->
 					<tr><hr style="border-color: #ffffff; margin: 10px 0;"></tr>
-					<tr><button onclick="generateRandomSystem()">Random System</button></tr><br>
-					<tr><button onclick="generateRandomMultiSystem()">Multi-System Random</button></tr><br>
-					<tr><button onclick="generateMultiMoonSystem()">Multi Moon System</button></tr><br>
-					
+					<tr><button onclick="generateRandomSystem()">Random System</button></tr>
+					<tr><button onclick="generateRandomMultiSystem()">Multi-System Random</button></tr>
+					<tr><button onclick="generateMultiMoonSystem()">Multi Moon System</button></tr>
+					<tr><button onclick="generateBinarySystem()">Binary System</button></tr>
 					<tr>
 						<td><span class="seltxt">System Size:</span></td>
 						<td>
