@@ -21,7 +21,7 @@
 			  padding: 5px 5px 5px 5px;
 			  border: solid #ffffff 1px;
 			  text-decoration: none;
-			  width: 88px;
+			  width: 198px;
 			  margin-top:2px;
 			}
 
@@ -37,6 +37,13 @@
 			  border: solid #ffffff 1px;
 			  text-decoration: none;
 			  margin-left:5px;
+			}
+
+			.seltxt {
+			  font-family: Courier New;
+			  color: #ffffff;
+			  font-size: 11px;
+			  background: #000000;
 			}
 
 			button:hover {
@@ -58,7 +65,7 @@
 				margin-left:-20px;
 				border: solid #ffffff 1px;
 				border-left-width: 0px;
-				width:88px;
+				width:200px;
 			}
 			#homebox {
 				font-size:20px;
@@ -104,6 +111,9 @@
                 setMoonMass(document.getElementById("moonSelector").value);
                 // Set initial planet mass based on the default selected option
                 setCelestialBodyMass(document.getElementById("planetSelector").value);
+
+                 // Set initial value for Black Hole mass in solar masses
+                document.getElementById("blackHoleSolarMass").value = "1"; // Default to 1000 solar masses
             };
 
 			function start(){
@@ -146,6 +156,7 @@
 			// Function to set predefined celestial body masses
 			function setCelestialBodyMass(body){
 				let mass;
+				let isBlackHole = false; // Nuevo: bandera para agujero negro
 				switch(body){
 					case 'sun':
 						mass = 1.989e6; // A scaled mass for the Sun, adjust as needed for simulation
@@ -174,10 +185,16 @@
 					case 'neptune':
 						mass = 1.024e5; // Scaled mass for Neptune
 						break;
+					case 'blackhole': // Nuevo caso para agujero negro
+						mass = 1.0e30; // Masa muy grande para agujero negro
+						isBlackHole = true;
+						break;
 					default:
 						mass = 1e3; // Default to 'Small' if unknown
 				}
 				setSize(mass);
+				// Actualizar la variable global en Gravity.min.js si es necesario, o manejarla al crear la partícula
+				currentParticleType = isBlackHole ? 'blackhole' : 'matter'; // Actualizar el tipo de partícula
 			}
 
 			// Variable y función para alternar la visibilidad del campo gravitatorio.
@@ -247,18 +264,19 @@
                         name: "Sun",
                         mass: 1.989e30,
                         distance: 0, // Distancia desde el centro del sistema
-                        color: [255, 255, 0] // Amarillo
+                        color: [255, 255, 0], // Amarillo
+                        isBlackHole: false
                     },
                     // Planetas (masa, distancia media en millones de km)
                     // Las velocidades del mundo real se eliminan ya que las calcularemos en función del sistema escalado.
-                    { name: "Mercury", mass: 3.30e23, distance: 57.9 * 1.5, color: [169, 169, 169] }, // Gris
-                    { name: "Venus", mass: 4.87e24, distance: 108.2 * 1.5, color: [255, 165, 0] },   // Naranja
-                    { name: "Earth", mass: 5.97e24, distance: 149.6 * 1.5, color: [0, 0, 255] },     // Azul
-                    { name: "Mars", mass: 6.42e23, distance: 228.0 * 1.5, color: [255, 0, 0] },       // Rojo
-                    { name: "Jupiter", mass: 1.90e27, distance: 778.5 * 1.5, color: [255, 223, 0] },  // Dorado
-                    { name: "Saturn", mass: 5.68e26, distance: 1432.0 * 1.5, color: [210, 180, 140] }, // Canela
-                    { name: "Uranus", mass: 8.68e25, distance: 2867.0 * 1.5, color: [173, 216, 230] }, // Azul claro
-                    { name: "Neptune", mass: 1.02e26, distance: 4515.0 * 1.5, color: [65, 105, 225] }  // Azul real
+                    { name: "Mercury", mass: 3.30e23, distance: 57.9 * 1.5, color: [169, 169, 169], isBlackHole: false }, // Gris
+                    { name: "Venus", mass: 4.87e24, distance: 108.2 * 1.5, color: [255, 165, 0], isBlackHole: false },   // Naranja
+                    { name: "Earth", mass: 5.97e24, distance: 149.6 * 1.5, color: [0, 0, 255], isBlackHole: false },     // Azul
+                    { name: "Mars", mass: 6.42e23, distance: 228.0 * 1.5, color: [255, 0, 0], isBlackHole: false },       // Rojo
+                    { name: "Jupiter", mass: 1.90e27, distance: 778.5 * 1.5, color: [255, 223, 0], isBlackHole: false },  // Dorado
+                    { name: "Saturn", mass: 5.68e26, distance: 1432.0 * 1.5, color: [210, 180, 140], isBlackHole: false }, // Canela
+                    { name: "Uranus", mass: 8.68e25, distance: 2867.0 * 1.5, color: [173, 216, 230], isBlackHole: false }, // Azul claro
+                    { name: "Neptune", mass: 1.02e26, distance: 4515.0 * 1.5, color: [65, 105, 225], isBlackHole: false }  // Azul real
                 ];
 
                 // Obtener la masa escalada del Sol primero
@@ -309,7 +327,7 @@
                         // Recalcular color[3] para el nuevo color personalizado (formato hexadecimal)
                         particle.color[3] = (particle.color[0] << 16 | particle.color[1] << 8 | particle.color[2]).toString(16);
                     }
-
+                    particle.isBlackHole = body.isBlackHole; // Asignar la propiedad isBlackHole
                     // `particleList` es una variable global definida en Gravity.min.js
                     particleList.push(particle);
                 }
@@ -331,27 +349,27 @@
                 var vx = 0;
                 var vy = 0;
 
-                if (particleList.length > 0) {
-                    var targetParticle = null;
-
-                    // Try to find the Sun if it exists
-                    for(var i = 0; i < particleList.length; i++) {
-                        if (particleList[i].name === "Sun") {
-                            targetParticle = particleList[i];
-                            break;
-                        }
+                var targetParticle = null;
+                // Try to find the Sun if it exists
+                for(var i = 0; i < particleList.length; i++) {
+                    if (particleList[i].name === "Sun") {
+                        targetParticle = particleList[i];
+                        break;
                     }
+                }
 
-                    // If no Sun, use the first particle as the target
-                    if (!targetParticle) {
-                        targetParticle = particleList[0];
-                    }
+                // If no Sun, use the first particle as the target
+                if (!targetParticle && particleList.length > 0) {
+                    targetParticle = particleList[0];
+                }
 
-                    // Place the moon at a reasonable distance from the target particle
-                    var desiredOrbitDistance = targetParticle.radius * 20; // Adjust as needed
-                    if (desiredOrbitDistance < 50) desiredOrbitDistance = 50; // Minimum distance
+                if (targetParticle) {
+                    // Place the moon at a random distance from the target particle
+                    // Range for moon distances (adjust as needed for simulation scale)
+                    var minOrbitDistance = targetParticle.radius * 20 + 50; // Ensure it's outside the planet
+                    var maxOrbitDistance = targetParticle.radius * 20 + 200; // Further away
+                    var desiredOrbitDistance = minOrbitDistance + (Math.random() * (maxOrbitDistance - minOrbitDistance));
 
-                    // Random initial angle for placement
                     var initialAngle = Math.random() * 2 * Math.PI;
                     x = targetParticle.x + desiredOrbitDistance * Math.cos(initialAngle);
                     y = targetParticle.y + desiredOrbitDistance * Math.sin(initialAngle);
@@ -363,23 +381,97 @@
                     if (distance > 0) {
                         var orbitalSpeed = Math.sqrt(targetParticle.mass / distance);
 
-                        // Tangential velocity, relative to the target particle's velocity
                         vx = -orbitalSpeed * (relativeY / distance) + targetParticle.vx;
                         vy = orbitalSpeed * (relativeX / distance) + targetParticle.vy;
                     }
-
                 } else {
                     // If no particles, moon appears in the center with a small initial velocity
                     vx = 0.1;
                     vy = -0.1;
                 }
 
-                // Add a random name for the moon if desired
-                var moonNames = ["Luna", "Phobos", "Deimos", "Io", "Europa", "Ganymede", "Callisto", "Titan", "Rhea", "Iapetus", "Triton", "Charon"];
-                var randomMoonName = moonNames[Math.floor(Math.random() * moonNames.length)];
+                var moonNames = ["Luna", "Phobos", "Deimos", "Io", "Europa", "Ganymede", "Callisto", "Titan", "Rhea", "Iapetus", "Triton", "Charon", "Despina", "Galatea", "Larissa", "Proteus", "Nereid", "Thalassa", "Naiad"];
+                var randomMoonName = moonNames[Math.floor(Math.random() * moonNames.length)] + " " + (Math.floor(Math.random() * 100) + 1); // Add a number to make names more unique
 
                 particleList.push(new Particle(newMass, x, y, vx, vy, currentParticleType, randomMoonName));
             }
+
+
+            // NEW: Function to add a black hole at the center
+            function addBlackHole() {
+                clearCanvas(); // Clear existing particles for a cleaner black hole creation
+                const SOLAR_MASS_UNIT = 1.989e6; // A scaled solar mass unit for simulation (adjust if needed)
+                var solarMasses = parseFloat(document.getElementById("blackHoleSolarMass").value);
+
+                if (isNaN(solarMasses) || solarMasses <= 0) {
+                    solarMasses = 1000; // Default to 1000 solar masses if input is invalid
+                    document.getElementById("blackHoleSolarMass").value = "1000";
+                }
+
+                var bhMass = solarMasses * SOLAR_MASS_UNIT; // Convert solar masses to simulation mass
+
+                var blackHole = new Particle(bhMass, width / 2, height / 2, 0, 0, 'matter', 'Black Hole');
+                blackHole.isBlackHole = true; // Set the flag for black hole
+                particleList.push(blackHole);
+            }
+
+            // NEW: Function to add an asteroid belt
+            function addAsteroidBelt() {
+                const numAsteroids = 500; // Number of asteroids in the belt
+                const asteroidMass = 1e2; // Scaled mass for individual asteroids (small)
+                const minDistance = 200; // Minimum distance from the center (adjust as needed)
+                const maxDistance = 400; // Maximum distance from the center (adjust as needed)
+                const distanceVariation = 50; // How much distance can vary for each asteroid
+
+                var targetParticle = null;
+                // Try to find the Sun if it exists
+                for(var i = 0; i < particleList.length; i++) {
+                    if (particleList[i].name === "Sun") {
+                        targetParticle = particleList[i];
+                        break;
+                    }
+                }
+
+                // If no Sun, use the first particle as the target or the center of the canvas
+                if (!targetParticle) {
+                    if (particleList.length > 0) {
+                         targetParticle = particleList[0];
+                    } else {
+                        // If no particles, place belt around canvas center
+                        targetParticle = {x: width / 2, y: height / 2, vx: 0, vy: 0, mass: 1e6}; // Create a dummy target
+                    }
+                }
+
+                for (var i = 0; i < numAsteroids; i++) {
+                    var asteroidName = "Asteroid " + (i + 1);
+                    var currentDistance = minDistance + (Math.random() * (maxDistance - minDistance));
+                    currentDistance += (Math.random() - 0.5) * distanceVariation; // Add some variation
+
+                    var initialAngle = Math.random() * 2 * Math.PI; // Random angle around the target
+
+                    var x = targetParticle.x + currentDistance * Math.cos(initialAngle);
+                    var y = targetParticle.y + currentDistance * Math.sin(initialAngle);
+
+                    var relativeX = x - targetParticle.x;
+                    var relativeY = y - targetParticle.y;
+                    var distance = Math.sqrt(relativeX * relativeX + relativeY * relativeY);
+
+                    var vx = 0;
+                    var vy = 0;
+
+                    if (distance > 0) {
+                        var orbitalSpeed = Math.sqrt(targetParticle.mass / distance);
+                        // Add some random deviation to orbital speed for a less perfect ring
+                        orbitalSpeed *= (0.9 + Math.random() * 0.2); // +/- 10%
+
+                        vx = -orbitalSpeed * (relativeY / distance) + targetParticle.vx;
+                        vy = orbitalSpeed * (relativeX / distance) + targetParticle.vy;
+                    }
+
+                    particleList.push(new Particle(asteroidMass, x, y, vx, vy, 'matter', asteroidName));
+                }
+            }
+
 		</script>
 	</head>
 	<body style="background-color:black">
@@ -387,6 +479,7 @@
 			Inspired by the classic <a href="http://www.nowykurier.com/toys/gravity/gravity.html">Gravity Toy</a> and rewritten in Javascript.</br>
 			Click and drag to add new particles. Hold shift and drag to translate.</br></br>
 			<div id="controlbox" style="z-index:4">
+                <div id="particleCount" style="margin-bottom: 5px;">Particles: 0</div>
 				<table>
 					<tr>Mass:<input type="text" value="1.0e3" class="txt" style="width:50px;" id="mass"></tr></br>
 					<tr><button onclick="setSize(100)">Tiny</button></tr></br>
@@ -395,7 +488,7 @@
 					<tr><button onclick="setSize(100000)">Huge</button></tr></br>
 					<tr><button onclick="setSize(1000000)">Enormous</button></tr>
                     <tr>
-                        <td>Planet Mass:</td>
+                        <td><span class="seltxt">Celestial Body Mass:</span></td>
                         <td>
                             <select id="planetSelector" onchange="setCelestialBodyMass(this.value)">
                                 <option value="sun">Sun</option>
@@ -407,11 +500,12 @@
                                 <option value="saturn">Saturn</option>
                                 <option value="uranus">Uranus</option>
                                 <option value="neptune">Neptune</option>
+                                <option value="blackhole">Black Hole</option>
                             </select>
                         </td>
                     </tr>
 					<tr>
-                        <td>Moon Mass:</td>
+                        <td><span class="seltxt">Moon Mass:</span></td>
                         <td>
                             <select id="moonSelector" onchange="setMoonMass(this.value)">
                                 <option value="1.0e-1">Small Moon</option>
@@ -429,6 +523,12 @@
                         </td>
                     </tr>
                     <tr><button onclick="addMoon()">Add Moon</button></tr>
+                    <tr>
+                        <td><span class="seltxt">Black Hole Mass:</span></td>
+                        <td><input type="text" value="1" class="txt" style="width:50px;" id="blackHoleSolarMass"></td>
+                    </tr>
+                    <tr><button onclick="addBlackHole()">Add Black Hole</button></tr>
+                    <tr><button onclick="addAsteroidBelt()">Add Asteroid Belt</button></tr>
 				</table>
 				<button onclick="start()">Start</button></br>
 				<button onclick="stop()">Stop</button></br>
@@ -446,6 +546,6 @@
 			</div>
 		</div>
 		<canvas id="canvas" style="z-index:-1;position:absolute;left: 0px;top: 0px;"></canvas>
-		<div id="homebox"><a href='/'>Home</a></div>
+		<div id="homebox"><a href='/'>R.-</a></div>
 	</body>
 </html>
