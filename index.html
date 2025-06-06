@@ -918,5 +918,47 @@
 		</div>
 		<canvas id="canvas" style="z-index:-1;position:absolute;left: 0px;top: 0px;"></canvas>
 		<div id="homebox"><a href='/'>R.-</a></div>
+	<script>
+    // Hotkeys configuration
+    document.addEventListener('keydown', function(event) {
+        switch(event.key.toLowerCase()) {
+            // Particle mass presets
+            case '1': setSize(100); break;          // Tiny (1)
+            case '2': setSize(1000); break;         // Small (2)
+            case '3': setSize(10000); break;        // Medium (3)
+            case '4': setSize(100000); break;       // Huge (4)
+            case '5': setSize(1000000); break;      // Enormous (5)
+            
+            // System generation
+            case 'r': generateRandomSystem(); break;       // Random (R)
+            case 'm': generateRandomMultiSystem(); break;  // Multi-system (M)
+            case 'l': generateMultiMoonSystem(); break;    // Lunar system (L)
+            case 'b': generateBinarySystem(); break;       // Binary (B)
+            
+            // Celestial bodies
+            case 'a': addMoon(); break;                   // Add moon (A)
+            case 'h': addBlackHole(); break;              // Black Hole (H)
+            case 'k': addAsteroidBelt(); break;           // asteroiD (K - D was taken)
+            
+            // Controls
+            case 's': start(); break;                     // Start (S)
+            case 'p': stop(); break;                      // stoP (P)
+            case 'd': generateProto(); break;             // protodisk (D)
+            case 'c': clearCanvas(); break;               // Clear (C)
+            case 't': toggleTrails(); break;              // Trails (T)
+            case 'f': toggleGravityField(); break;         // Field (F)
+            case 'n': toggleParticleNames(); break;       // Names (N)
+            case 'w': toggleGravityWellsAndButton(); break; // Wells (W)
+            case 'o': toggleOrbitsAndButton(); break;     // Orbits (O)
+            case 'x': clearAllParticleOrbits(); break;    // clear orbits (X)
+            case 'y': placeSolarSystem(); break;          // solar sYstem (Y)
+            
+            // Toggles
+            case 'v': toggleMagnetospheresAndButton(); break; // Magnetospheres (V - M taken)
+            case 'g': toggleParticleMassAndButton(); break;   // Mass (G - M taken)
+            case 'u': toggleParticleType(); break;           // matter/antiMatter (U - M taken)
+        }
+    });
+</script>
 	</body>
 </html>
