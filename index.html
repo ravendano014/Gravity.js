@@ -940,7 +940,7 @@
 			<h3>Keyboard Shortcuts</h3>
 			<ul>
 				<li><strong>S</strong>: Start/Stop simulation</li>
-				<li><strong>1-5</strong>: Set particle size (Tiny to Enormous)</li>
+				<li><strong>0-9</strong>: Set particle size</li>
 				<li><strong>T</strong>: Toggle trails</li>
 				<li><strong>F</strong>: Toggle gravity field</li>
 				<li><strong>W</strong>: Toggle gravity wells</li>
@@ -966,6 +966,7 @@
     document.addEventListener('keydown', function(event) {
         switch(event.key.toLowerCase()) {
             // Particle mass presets
+			case '0': setSize(1); break;          // Dust (0)
             case '1': setSize(100); break;          // Tiny (1)
             case '2': setSize(1000); break;         // Small (2)
             case '3': setSize(10000); break;        // Medium (3)
