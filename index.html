@@ -202,7 +202,7 @@
 						mass = 1.024e5; // Scaled mass for Neptune
 						break;
 					case 'blackhole': // Nuevo caso para agujero negro
-						mass = 1.0e30; // Masa muy grande para agujero negro
+						mass = 10000; // Masa muy grande para agujero negro
 						isBlackHole = true;
 						break;
 					default:
@@ -414,22 +414,46 @@
 
 
             // NEW: Function to add a black hole at the center
-            function addBlackHole() {
-                clearCanvas(); // Clear existing particles for a cleaner black hole creation
-                const SOLAR_MASS_UNIT = 1.989e6; // A scaled solar mass unit for simulation (adjust if needed)
-                var solarMasses = parseFloat(document.getElementById("blackHoleSolarMass").value);
+			function addBlackHole() {
+				const SOLAR_MASS = 1.989e30;
+				const SCALE_FACTOR = 1e-20;
+				
+				var solarMasses = parseFloat(document.getElementById("blackHoleSolarMass").value);
+				if (isNaN(solarMasses)) solarMasses = 10;
+				
+				var bhMass = solarMasses * SOLAR_MASS * SCALE_FACTOR;
+				var bh = new Particle(
+					bhMass, 
+					width/2, 
+					height/2, 
+					0, 
+					0, 
+					'blackhole', 
+					'Black Hole (' + solarMasses + 'M☉)'
+				);
+				
+				particleList.push(bh);
+			}
 
-                if (isNaN(solarMasses) || solarMasses <= 0) {
-                    solarMasses = 1000; // Default to 1000 solar masses if input is invalid
-                    document.getElementById("blackHoleSolarMass").value = "1000";
-                }
-
-                var bhMass = solarMasses * SOLAR_MASS_UNIT; // Convert solar masses to simulation mass
-
-                var blackHole = new Particle(bhMass, width / 2, height / 2, 0, 0, 'matter', 'Black Hole');
-                blackHole.isBlackHole = true; // Set the flag for black hole
-                particleList.push(blackHole);
-            }
+			function setCelestialBodyMass(body){
+				let mass;
+				let isBlackHole = false;
+				switch(body){
+					case 'sun': mass = 1.989e6; break;
+					case 'mercury': mass = 3.301e2; break;
+					case 'venus': mass = 4.867e3; break;
+					case 'earth': mass = 5.972e3; break;
+					case 'mars': mass = 6.417e2; break;
+					case 'jupiter': mass = 1.898e6; break;
+					case 'saturn': mass = 5.683e5; break;
+					case 'uranus': mass = 8.681e4; break;
+					case 'neptune': mass = 1.024e5; break;
+					case 'blackhole': mass = 10000; isBlackHole = true; break;
+					default: mass = 1e3;
+				}
+				setSize(mass);
+				currentParticleType = isBlackHole ? 'blackhole' : 'matter';
+			}
 
             // NEW: Function to add an asteroid belt
             function addAsteroidBelt() {
@@ -914,7 +938,7 @@
                         <td><span class="seltxt">Black Hole Mass:</span></td>
                         <td><input type="text" value="1" class="txt" style="width:50px;" id="blackHoleSolarMass"></td>
                     </tr>
-                    <tr><button onclick="addBlackHole()">Add Black Hole</button></tr>
+					<tr><button onclick="addBlackHole()">Add Black Hole</button></tr>
                     <tr><button onclick="addAsteroidBelt()">Add Asteroid Belt</button></tr>
 				</table>
 				<button onclick="start()">Start</button></br>
