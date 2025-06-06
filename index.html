@@ -87,6 +87,16 @@
 			a:visited {
 				color:#0000FF;
 			}
+			#hotkeyHelp {
+				position: absolute;
+				right: 10px;
+				top: 50px;
+				border: solid #ffffff 1px;
+				padding: 10px;
+				background: black;
+				display: none;
+				z-index: 100;
+			}
 		</style>
 		<script>
 			var interval = -1;
@@ -115,6 +125,12 @@
                  // Set initial value for Black Hole mass in solar masses
                 document.getElementById("blackHoleSolarMass").value = "1"; // Default to 1000 solar masses
             };
+
+			// Function to toggle help display
+			function toggleHelp() {
+				var help = document.getElementById('hotkeyHelp');
+				help.style.display = help.style.display === 'block' ? 'none' : 'block';
+			}
 
 			function start(){
 				if(interval == -1){
@@ -832,7 +848,7 @@
 	<body style="background-color:black">
 		<div class="noselect">
 			Inspired by the classic <a href="http://www.nowykurier.com/toys/gravity/gravity.html">Gravity Toy</a> and rewritten in Javascript.</br>
-			Click and drag to add new particles. Hold shift and drag to translate.</br></br>
+			Click and drag to add new particles. Hold shift and drag to translate. Press ? for Help.</br></br>
 			<div id="controlbox" style="z-index:4">
                 <div id="particleCount" style="margin-bottom: 5px;">Particles: 0</div>
 				<table>
@@ -917,7 +933,34 @@
 			</div>
 		</div>
 		<canvas id="canvas" style="z-index:-1;position:absolute;left: 0px;top: 0px;"></canvas>
-		<div id="homebox"><a href='/'>R.-</a></div>
+		<div id="homebox"><a href='#'>Gravity Toy</a></div>
+		
+		<!-- Hotkey Help Box -->
+		<div id="hotkeyHelp">
+			<h3>Keyboard Shortcuts</h3>
+			<ul>
+				<li><strong>S</strong>: Start/Stop simulation</li>
+				<li><strong>1-5</strong>: Set particle size (Tiny to Enormous)</li>
+				<li><strong>T</strong>: Toggle trails</li>
+				<li><strong>F</strong>: Toggle gravity field</li>
+				<li><strong>W</strong>: Toggle gravity wells</li>
+				<li><strong>O</strong>: Toggle orbits</li>
+				<li><strong>X</strong>: Clear all orbits</li>
+				<li><strong>N</strong>: Toggle particle names</li>
+				<li><strong>G</strong>: Toggle particle mass</li>
+				<li><strong>V</strong>: Toggle magnetospheres</li>
+				<li><strong>A</strong>: Add moon</li>
+				<li><strong>H</strong>: Add black hole</li>
+				<li><strong>K</strong>: Add asteroid belt</li>
+				<li><strong>B</strong>: Create binary system</li>
+				<li><strong>M</strong>: Create multi-system</li>
+				<li><strong>C</strong>: Clear canvas</li>
+				<li><strong>D</strong>: Create protodisk</li>
+				<li><strong>R</strong>: Create random system</li>
+				<li><strong>Y</strong>: Create solar system</li>
+				<li><strong>?</strong>: Show/hide this help</li>
+			</ul>
+		</div>
 	<script>
     // Hotkeys configuration
     document.addEventListener('keydown', function(event) {
@@ -928,7 +971,11 @@
             case '3': setSize(10000); break;        // Medium (3)
             case '4': setSize(100000); break;       // Huge (4)
             case '5': setSize(1000000); break;      // Enormous (5)
-            
+            case '6': setSize(10000000); break;      // Enormous God (6)
+			case '7': setSize(100000000); break;      // Enormous Oh God (7)
+			case '8': setSize(1000000000); break;      // Enormous Oh My God (8)
+			case '9': setSize(10000000000); break;      // Enormous Oh My F God (9)
+
             // System generation
             case 'r': generateRandomSystem(); break;       // Random (R)
             case 'm': generateRandomMultiSystem(); break;  // Multi-system (M)
@@ -957,6 +1004,7 @@
             case 'v': toggleMagnetospheresAndButton(); break; // Magnetospheres (V - M taken)
             case 'g': toggleParticleMassAndButton(); break;   // Mass (G - M taken)
             case 'u': toggleParticleType(); break;           // matter/antiMatter (U - M taken)
+			case '?': toggleHelp(); break;
         }
     });
 </script>
