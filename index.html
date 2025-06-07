@@ -412,29 +412,6 @@
                 particleList.push(new Particle(newMass, x, y, vx, vy, currentParticleType, randomMoonName));
             }
 
-
-            // NEW: Function to add a black hole at the center
-			function addBlackHole() {
-				const SOLAR_MASS = 1.989e30;
-				const SCALE_FACTOR = 1e-20;
-				
-				var solarMasses = parseFloat(document.getElementById("blackHoleSolarMass").value);
-				if (isNaN(solarMasses)) solarMasses = 10;
-				
-				var bhMass = solarMasses * SOLAR_MASS * SCALE_FACTOR;
-				var bh = new Particle(
-					bhMass, 
-					width/2, 
-					height/2, 
-					0, 
-					0, 
-					'blackhole', 
-					'Black Hole (' + solarMasses + 'M☉)'
-				);
-				
-				particleList.push(bh);
-			}
-
 			function setCelestialBodyMass(body){
 				let mass;
 				let isBlackHole = false;
@@ -934,11 +911,6 @@
                         </td>
                     </tr>
                     <tr><button onclick="addMoon()">Add Moon</button></tr>
-                    <tr>
-                        <td><span class="seltxt">Black Hole Mass:</span></td>
-                        <td><input type="text" value="1" class="txt" style="width:50px;" id="blackHoleSolarMass"></td>
-                    </tr>
-					<tr><button onclick="addBlackHole()">Add Black Hole</button></tr>
                     <tr><button onclick="addAsteroidBelt()">Add Asteroid Belt</button></tr>
 				</table>
 				<button onclick="start()">Start</button></br>
