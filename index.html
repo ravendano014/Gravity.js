@@ -976,56 +976,90 @@
             particleList.push(particle);
         }
         
-        function generateGalaxy() {
-            clearCanvas();
-            var centerX = width / 2;
-            var centerY = height / 2;
-            
-            // Create central black hole
-            var bhMass = 1e6;
-            var blackHole = new Particle(bhMass, centerX, centerY, 0, 0, "blackhole", "Galactic Core");
-            particleList.push(blackHole);
-            
-            // Create spiral arms
-            var numArms = 2 + Math.floor(Math.random() * 3); // 2-4 arms
-            var numStars = 200 + Math.floor(Math.random() * 300); // 200-500 stars
-            
-            for (var i = 0; i < numStars; i++) {
-                var arm = i % numArms;
-                var angle = (arm / numArms) * Math.PI * 2 + (Math.random() * 0.5 - 0.25);
-                var distance = 50 + Math.pow(Math.random(), 2) * 500;
-                
-                // Spiral pattern
-                angle += Math.log(distance / 50) * 0.5;
-                
-                var x = centerX + distance * Math.cos(angle);
-                var y = centerY + distance * Math.sin(angle);
-                
-                // Calculate orbital velocity (Keplerian with dark matter halo adjustment)
-                var orbitalSpeed = Math.sqrt(bhMass / distance) * (1 + 0.5 * Math.pow(distance / 300, 0.5));
-                var vx = -orbitalSpeed * Math.sin(angle);
-                var vy = orbitalSpeed * Math.cos(angle);
-                
-                // Random star mass (mostly small stars, few large ones)
-                var mass = 100 + Math.pow(Math.random(), 3) * 5000;
-                
-                var star = new Particle(mass, x, y, vx, vy, "matter", "Star " + (i + 1));
-                
-                // Color based on mass (hot = blue, cool = red)
-                if (mass > 3000) {
-                    star.color = [255, 200, 100]; // Yellow-white
-                } else if (mass > 1000) {
-                    star.color = [255, 255, 255]; // White
-                } else if (mass > 500) {
-                    star.color = [200, 220, 255]; // Blue-white
-                } else {
-                    star.color = [255, 150, 150]; // Red
-                }
-                star.color[3] = (star.color[0] << 16 | star.color[1] << 8 | star.color[2]).toString(16);
-                
-                particleList.push(star);
-            }
+function generateGalaxy() {
+    clearCanvas();
+    var centerX = width / 2 / zoomLevel - panX / zoomLevel;
+    var centerY = height / 2 / zoomLevel - panY / zoomLevel;
+
+    // Crear agujero negro central (o núcleo galáctico)
+    var bhMass = 5e5*10; // Masa ligeramente reducida para el núcleo central
+    var blackHole = new Particle(bhMass, centerX, centerY, 0, 0, "matter", "Galactic Core");
+    particleList.push(blackHole);
+
+    // Parámetros de la galaxia
+    var numStars = 12000; // Número fijo de estrellas
+    var numArms = 12 + Math.floor(Math.random() * 3); // 2-4 brazos espirales
+    var maxGalaxyRadius = 1000; // Distancia máxima desde el centro para las estrellas
+    var minGalaxyRadius = 100; // Distancia mínima para evitar colocar estrellas demasiado cerca del BH
+
+    // Coeficientes para los brazos espirales y la curva de rotación
+    var spiralTightness = -1.5 - Math.random() * 0.5; // Controla qué tan ajustada es la espiral
+    var velocityFlatteningFactor = 0.05; // Controla la "planitud" de la curva de rotación para las estrellas exteriores
+    var randomVelocitySpread = 3; // Pequeño componente aleatorio para las velocidades
+
+    for (var i = 0; i < numStars; i++) {
+        var arm = i % numArms;
+        var baseAngle = (arm / numArms) * Math.PI * 2; // Ángulo inicial para cada brazo
+
+        // Distancia desde el centro, con más estrellas concentradas más cerca del centro
+        // Usando Math.pow(Math.random(), 1.5) sesga hacia números más pequeños (más estrellas internas)
+        var distance = minGalaxyRadius + Math.pow(Math.random(), 1.5) * (maxGalaxyRadius - minGalaxyRadius);
+
+        // Calcular el ángulo espiral
+        var spiralAngle = baseAngle + Math.log(distance / minGalaxyRadius) * spiralTightness;
+        
+        // Añadir algo de ruido radial y tangencial a la posición para un aspecto más natural
+        var noiseAngle = (Math.random() - 0.5) * (Math.PI / 10); // Ruido de +/- 18 grados
+        var noiseDistance = (Math.random() - 0.5) * 20; // Ruido de +/- 20 unidades
+        
+        var x = centerX + (distance + noiseDistance) * Math.cos(spiralAngle + noiseAngle);
+        var y = centerY + (distance + noiseDistance) * Math.sin(spiralAngle + noiseAngle);
+
+        // Calcular la velocidad orbital (aproximando una curva de rotación plana)
+        // v = sqrt(G * M_efectiva / r)
+        // M_efectiva incluye el agujero negro central y un componente de masa distribuida (halo de materia oscura)
+        
+        // Aproximación simplificada de una curva de rotación plana:
+        var keplerianVelocity = Math.sqrt(G * bhMass / distance);
+        // Un término inspirado en la "materia oscura" que añade velocidad constante para distancias mayores
+        var haloVelocity = velocityFlatteningFactor * distance;
+
+        var orbitalSpeed = keplerianVelocity + haloVelocity; // Suma de los componentes
+        
+        // Asegurarse de que orbitalSpeed sea un valor razonable; evitar NaN o valores extremadamente grandes
+        if (isNaN(orbitalSpeed) || !isFinite(orbitalSpeed)) {
+            orbitalSpeed = 0; // Por defecto a 0 si el cálculo es incorrecto (por ejemplo, distancia muy pequeña)
         }
+        
+        // Introducir algo de velocidad perpendicular para la estabilidad
+        var vx = -orbitalSpeed * Math.sin(spiralAngle);
+        var vy = orbitalSpeed * Math.cos(spiralAngle);
+
+        // Añadir una pequeña perturbación aleatoria a la velocidad para un movimiento más natural
+        vx += (Math.random() - 0.5) * randomVelocitySpread;
+        vy += (Math.random() - 0.5) * randomVelocitySpread;
+
+        // Masa aleatoria de las estrellas (mayormente estrellas pequeñas, pocas grandes)
+        // Ajustar el rango de masa para evitar estrellas demasiado dominantes que desestabilicen la galaxia
+        var mass = 50 + Math.pow(Math.random(), 4) * 2000; // Sesgo hacia estrellas más pequeñas, máx 2050
+
+        var star = new Particle(mass, x, y, vx, vy, "matter", "Star " + (i + 1));
+
+        // Color basado en la masa (caliente = azul, fría = roja), refinado para galaxias
+        if (mass > 1500) { // Estrellas grandes y brillantes
+            star.color = [255, 255, 150]; // Amarillento-blanco
+        } else if (mass > 500) { // Estrellas medianas
+            star.color = [255, 255, 255]; // Blanco
+        } else if (mass > 200) { // Estrellas más pequeñas y calientes
+            star.color = [150, 200, 255]; // Azul-blanco
+        } else { // Estrellas más pequeñas y frías (las más comunes)
+            star.color = [255, 180, 180]; // Rojizo
+        }
+        star.color[3] = (star.color[0] << 16 | star.color[1] << 8 | star.color[2]).toString(16);
+
+        particleList.push(star);
+    }
+}
 		</script>
 	</head>
 	<body style="background-color:black">
