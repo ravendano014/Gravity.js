@@ -97,11 +97,45 @@
 				display: none;
 				z-index: 100;
 			}
+			#statusBar {
+				position: absolute;
+				bottom: 0;
+				left: 0;
+				width: 100%;
+				background: rgba(0, 0, 0, 0.7);
+				padding: 5px;
+				font-size: 11px;
+				border-top: 1px solid #fff;
+				display: flex;
+				justify-content: space-between;
+			}
+			#zoomLevel {
+				margin-right: 20px;
+			}
+			#simulationTime {
+				margin-left: 20px;
+			}
+			.section-title {
+				margin-top: 10px;
+				margin-bottom: 5px;
+				font-weight: bold;
+				border-bottom: 1px solid #fff;
+			}
 		</style>
 		<script>
 			var interval = -1;
 			var newParticleSize = 100;
 			var currentParticleType = 'matter'; // 'matter' or 'antimatter'
+
+			var isPaused = false;
+			var simulationTime = 0;
+			var lastFrameTime = 0;
+			var fps = 0;
+			var frameCount = 0;
+			var lastFpsUpdate = 0;
+			var autoZoomEnabled = false;
+			var trackedParticle = null;
+        
 
             // Asegura que init() y start() se llamen después de que los scripts estén cargados.
             window.onload = function() {
@@ -123,7 +157,7 @@
                 setCelestialBodyMass(document.getElementById("planetSelector").value);
 
                  // Set initial value for Black Hole mass in solar masses
-                document.getElementById("blackHoleSolarMass").value = "1"; // Default to 1000 solar masses
+                //document.getElementById("blackHoleSolarMass").value = "1"; // Default to 1000 solar masses
             };
 
 			// Function to toggle help display
@@ -132,9 +166,88 @@
 				help.style.display = help.style.display === 'block' ? 'none' : 'block';
 			}
 
-			function start(){
-				if(interval == -1){
-					interval = window.setInterval("main();",20);
+			function handleResize() {
+				var canvas = document.getElementById("canvas");
+				canvas.width = window.innerWidth;
+				canvas.height = window.innerHeight;
+				width = canvas.width;
+				height = canvas.height;
+			}
+        
+			function updateButtonTexts() {
+				document.getElementById("toggleMagnetospheresBtn").innerHTML = showMagnetospheres ? "Hide Magnetospheres" : "Show Magnetospheres";
+				document.getElementById("toggleOrbitsBtn").innerHTML = showOrbits ? "Hide Orbits" : "Show Orbits";
+				document.getElementById("toggleGravityWellsBtn").innerHTML = showGravityWells ? "Hide Gravity Wells" : "Show Gravity Wells";
+				document.getElementById("toggleMassBtn").innerHTML = showParticleMass ? "Hide Mass" : "Show Mass";
+				document.getElementById("toggleLensingBtn").innerHTML = showGravitationalLensing ? "Hide Lensing" : "Show Lensing";
+				document.getElementById("particleTypeBtn").innerHTML = currentParticleType.charAt(0).toUpperCase() + currentParticleType.slice(1);
+			}
+        
+			function togglePause() {
+				isPaused = !isPaused;
+				if (!isPaused && interval === -1) {
+					start();
+				}
+			}
+        
+			function increaseTimeStep() {
+				h *= 1.5;
+				updateStatusBar();
+			}
+			
+			function decreaseTimeStep() {
+				h /= 1.5;
+				updateStatusBar();
+			}
+        
+			function centerView() {
+				panX = width / 2;
+				panY = height / 2;
+				zoomLevel = 1.0;
+				updateStatusBar();
+			}
+        
+			function trackParticle() {
+				if (particleList.length > 0) {
+					trackedParticle = particleList[0]; // Track the first particle by default
+					// Could implement UI to select which particle to track
+				}
+			}
+        
+			function toggleAutoZoom() {
+				autoZoomEnabled = !autoZoomEnabled;
+				updateStatusBar();
+			}
+        
+			function updateStatusBar() {
+				document.getElementById("zoomLevel").innerHTML = zoomLevel.toFixed(2) + "x";
+				document.getElementById("panX").innerHTML = Math.round(panX);
+				document.getElementById("panY").innerHTML = Math.round(panY);
+				document.getElementById("simulationTime").innerHTML = "Time: " + simulationTime.toFixed(2);
+				document.getElementById("fpsCounter").innerHTML = fps.toFixed(0);
+			}
+
+			function start() {
+				if (interval === -1) {
+					lastFrameTime = Date.now();
+					interval = window.setInterval(function() {
+						var now = Date.now();
+						var deltaTime = (now - lastFrameTime) / 1000;
+						lastFrameTime = now;
+						
+						frameCount++;
+						if (now - lastFpsUpdate >= 1000) {
+							fps = frameCount / ((now - lastFpsUpdate) / 1000);
+							lastFpsUpdate = now;
+							frameCount = 0;
+							updateStatusBar();
+						}
+						
+						if (!isPaused) {
+							simulationTime += h;
+							main();
+						}
+					}, 20);
 				}
 			}
 
@@ -844,6 +957,75 @@
 				particleList.push(planet);
 			}
 		}
+
+		// New particle type functions
+        function addNeutronStar() {
+            var x = width / 2 + (Math.random() - 0.5) * 100;
+            var y = height / 2 + (Math.random() - 0.5) * 100;
+            var mass = 50000 + Math.random() * 50000;
+            var particle = new Particle(mass, x, y, 0, 0, "neutron", "Neutron Star");
+            particleList.push(particle);
+        }
+        
+        
+        function addDarkMatter() {
+            var x = width / 2 + (Math.random() - 0.5) * 300;
+            var y = height / 2 + (Math.random() - 0.5) * 300;
+            var mass = 10000 + Math.random() * 40000;
+            var particle = new Particle(mass, x, y, 0, 0, "dark", "Dark Matter");
+            particleList.push(particle);
+        }
+        
+        function generateGalaxy() {
+            clearCanvas();
+            var centerX = width / 2;
+            var centerY = height / 2;
+            
+            // Create central black hole
+            var bhMass = 1e6;
+            var blackHole = new Particle(bhMass, centerX, centerY, 0, 0, "blackhole", "Galactic Core");
+            particleList.push(blackHole);
+            
+            // Create spiral arms
+            var numArms = 2 + Math.floor(Math.random() * 3); // 2-4 arms
+            var numStars = 200 + Math.floor(Math.random() * 300); // 200-500 stars
+            
+            for (var i = 0; i < numStars; i++) {
+                var arm = i % numArms;
+                var angle = (arm / numArms) * Math.PI * 2 + (Math.random() * 0.5 - 0.25);
+                var distance = 50 + Math.pow(Math.random(), 2) * 500;
+                
+                // Spiral pattern
+                angle += Math.log(distance / 50) * 0.5;
+                
+                var x = centerX + distance * Math.cos(angle);
+                var y = centerY + distance * Math.sin(angle);
+                
+                // Calculate orbital velocity (Keplerian with dark matter halo adjustment)
+                var orbitalSpeed = Math.sqrt(bhMass / distance) * (1 + 0.5 * Math.pow(distance / 300, 0.5));
+                var vx = -orbitalSpeed * Math.sin(angle);
+                var vy = orbitalSpeed * Math.cos(angle);
+                
+                // Random star mass (mostly small stars, few large ones)
+                var mass = 100 + Math.pow(Math.random(), 3) * 5000;
+                
+                var star = new Particle(mass, x, y, vx, vy, "matter", "Star " + (i + 1));
+                
+                // Color based on mass (hot = blue, cool = red)
+                if (mass > 3000) {
+                    star.color = [255, 200, 100]; // Yellow-white
+                } else if (mass > 1000) {
+                    star.color = [255, 255, 255]; // White
+                } else if (mass > 500) {
+                    star.color = [200, 220, 255]; // Blue-white
+                } else {
+                    star.color = [255, 150, 150]; // Red
+                }
+                star.color[3] = (star.color[0] << 16 | star.color[1] << 8 | star.color[2]).toString(16);
+                
+                particleList.push(star);
+            }
+        }
 		</script>
 	</head>
 	<body style="background-color:black">
@@ -852,91 +1034,122 @@
 			Click and drag to add new particles. Hold shift and drag to translate. Press ? for Help.</br></br>
 			<div id="controlbox" style="z-index:4">
                 <div id="particleCount" style="margin-bottom: 5px;">Particles: 0</div>
+            	<div class="section-title">Mass Controls</div>
+				<button id="particleTypeBtn" onclick="toggleParticleType()">Matter</button></br>
 				<table>
 					<tr>Mass:<input type="text" value="1.0e3" class="txt" style="width:50px;" id="mass"></tr></br>
+					<tr><button onclick="setSize(1)">Dust</button></tr></br>
 					<tr><button onclick="setSize(100)">Tiny</button></tr></br>
 					<tr><button onclick="setSize(1000)">Small</button></tr></br>
 					<tr><button onclick="setSize(10000)">Medium</button></tr></br>
 					<tr><button onclick="setSize(100000)">Huge</button></tr></br>
 					<tr><button onclick="setSize(1000000)">Enormous</button></tr>
-					<!-- NEW: Random System Generation -->
-					<tr><hr style="border-color: #ffffff; margin: 10px 0;"></tr>
-					<tr><button onclick="generateRandomSystem()">Random System</button></tr>
-					<tr><button onclick="generateRandomMultiSystem()">Multi-System Random</button></tr>
-					<tr><button onclick="generateMultiMoonSystem()">Multi Moon System</button></tr>
-					<tr><button onclick="generateBinarySystem()">Binary System</button></tr>
-					<tr>
-						<td><span class="seltxt">System Size:</span></td>
-						<td>
-							<select id="systemSize">
-								<option value="small">Small (3-5 bodies)</option>
-								<option value="medium" selected>Medium (5-8 bodies)</option>
-								<option value="large">Large (8-12 bodies)</option>
-							</select>
-						</td>
-					</tr>
-                    <tr>
-                        <td><span class="seltxt">Celestial Body Mass:</span></td>
-                        <td>
-                            <select id="planetSelector" onchange="setCelestialBodyMass(this.value)">
-                                <option value="sun">Sun</option>
-                                <option value="mercury">Mercury</option>
-                                <option value="venus">Venus</option>
-                                <option value="earth">Earth</option>
-                                <option value="mars">Mars</option>
-                                <option value="jupiter">Jupiter</option>
-                                <option value="saturn">Saturn</option>
-                                <option value="uranus">Uranus</option>
-                                <option value="neptune">Neptune</option>
-                                <option value="blackhole">Black Hole</option>
-                            </select>
-                        </td>
-                    </tr>
-					<tr>
-                        <td><span class="seltxt">Moon Mass:</span></td>
-                        <td>
-                            <select id="moonSelector" onchange="setMoonMass(this.value)">
-                                <option value="1.0e-1">Small Moon</option>
-                                <option value="7.342e22">Earth's Moon</option>
-                                <option value="1.076e23">Io</option>
-                                <option value="4.800e22">Europa</option>
-                                <option value="1.481e23">Ganymede</option>
-                                <option value="1.076e23">Callisto</option>
-                                <option value="1.345e23">Titan</option>
-                                <option value="2.115e22">Rhea</option>
-                                <option value="1.896e21">Iapetus</option>
-                                <option value="1.345e23">Triton</option>
-                                <option value="1.620e21">Charon</option>
-                            </select>
-                        </td>
-                    </tr>
-                    <tr><button onclick="addMoon()">Add Moon</button></tr>
-                    <tr><button onclick="addAsteroidBelt()">Add Asteroid Belt</button></tr>
 				</table>
-				<button onclick="start()">Start</button></br>
-				<button onclick="stop()">Stop</button></br>
+				<div class="section-title">Particle Types</div>
+				<button onclick="addMoon()">Add Moon</button></br>
+
+				<button onclick="addNeutronStar()">Add Neutron Star</button></br>
+				<button onclick="addDarkMatter()">Add Dark Matter</button></br>
+
+				<div class="section-title">System Generation</div>
 				<button onclick="generateProto()">Protodisk</button></br>
-				<button onclick="clearCanvas()">Clear</button></br>
+				<button onclick="generateRandomSystem()">Random System</button></br>
+				<button onclick="generateRandomMultiSystem()">Multi-System</button></br>
+				<button onclick="generateMultiMoonSystem()">Moon System</button></br>
+				<button onclick="generateBinarySystem()">Binary System</button></br>
+				<button onclick="generateGalaxy()">Spiral Galaxy</button></br>
+				<button onclick="placeSolarSystem()">Solar System</button></br>
+				<button onclick="addAsteroidBelt()">Asteroid Belt</button></br>
+
+				<table>
+						<tr>
+							<td><span class="seltxt">System Size:</span></td>
+							<td>
+								<select id="systemSize">
+									<option value="small">Small (3-5 bodies)</option>
+									<option value="medium" selected>Medium (5-8 bodies)</option>
+									<option value="large">Large (8-12 bodies)</option>
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<td><span class="seltxt">Celestial Body Mass:</span></td>
+							<td>
+								<select id="planetSelector" onchange="setCelestialBodyMass(this.value)">
+									<option value="sun">Sun</option>
+									<option value="mercury">Mercury</option>
+									<option value="venus">Venus</option>
+									<option value="earth">Earth</option>
+									<option value="mars">Mars</option>
+									<option value="jupiter">Jupiter</option>
+									<option value="saturn">Saturn</option>
+									<option value="uranus">Uranus</option>
+									<option value="neptune">Neptune</option>
+									<option value="blackhole">Black Hole</option>
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<td><span class="seltxt">Moon Mass:</span></td>
+							<td>
+								<select id="moonSelector" onchange="setMoonMass(this.value)">
+									<option value="1.0e-1">Small Moon</option>
+									<option value="7.342e22">Earth's Moon</option>
+									<option value="1.076e23">Io</option>
+									<option value="4.800e22">Europa</option>
+									<option value="1.481e23">Ganymede</option>
+									<option value="1.076e23">Callisto</option>
+									<option value="1.345e23">Titan</option>
+									<option value="2.115e22">Rhea</option>
+									<option value="1.896e21">Iapetus</option>
+									<option value="1.345e23">Triton</option>
+									<option value="1.620e21">Charon</option>
+								</select>
+							</td>
+						</tr>
+				</table>
+
+				<div class="section-title">Visualization</div>
 				<button onclick="toggleTrails()">Toggle Trails</button></br>
-				<button id="particleTypeBtn" onclick="toggleParticleType()">Matter</button></br>
 				<button id="gravityFieldBtn" onclick="toggleGravityField()">Show Field</button></br>
 				<button id="toggleNamesBtn" onclick="toggleParticleNames()">Show Names</button></br>
 				<button id="toggleMassBtn" onclick="toggleParticleMassAndButton()">Show Mass</button></br>
 				<button id="toggleMagnetospheresBtn" onclick="toggleMagnetospheresAndButton()">Show Magnetospheres</button></br>
 				<button id="toggleOrbitsBtn" onclick="toggleOrbitsAndButton()">Show Orbits</button></br>
+				<button id="toggleGravityWellsBtn" onclick="toggleGravityWellsAndButton()">Show Gravity Wells</button></br>
+				<button id="toggleLensingBtn" onclick="toggleGravitationalLensing()">Show Lensing</button></br>
 				<button onclick="clearAllParticleOrbits()">Clear Orbits</button></br>
-				<button id="toggleGravityWellsBtn" onclick="toggleGravityWellsAndButton()">Show Gravity Wells</button></br> <button onclick="placeSolarSystem()">Solar System</button>
+            
+				<div class="section-title">Simulation Control</div>
+				<button onclick="start()">Start</button></br>
+				<button onclick="stop()">Stop</button></br>
+				<button onclick="togglePause()">Pause/Resume</button></br>
+				<button onclick="increaseTimeStep()">Faster</button></br>
+				<button onclick="decreaseTimeStep()">Slower</button></br>
+				<button onclick="clearCanvas()">Clear</button></br>
+				
+				<div class="section-title">Camera</div>
+				<button onclick="centerView()">Center View</button></br>
+				<button onclick="trackParticle()">Track Particle</button></br>
+				<button onclick="toggleAutoZoom()">Auto Zoom</button></br>
+
 			</div>
 		</div>
 		<canvas id="canvas" style="z-index:-1;position:absolute;left: 0px;top: 0px;"></canvas>
 		<div id="homebox"><a href='#'>Gravity Toy</a></div>
+		<div id="statusBar">
+			<span id="simulationTime">Time: 0</span>
+			<span>| Zoom: <span id="zoomLevel">1.00x</span> | Pan: (<span id="panX">0</span>, <span id="panY">0</span>)</span>
+			<span>| FPS: <span id="fpsCounter">0</span></span>
+		</div>
 		
 		<!-- Hotkey Help Box -->
 		<div id="hotkeyHelp">
 			<h3>Keyboard Shortcuts</h3>
 			<ul>
+				<li><strong>0-9</strong>: Set particle size presets</li>
 				<li><strong>S</strong>: Start/Stop simulation</li>
-				<li><strong>0-9</strong>: Set particle size</li>
+				<li><strong>P</strong>: Pause/Resume</li>
 				<li><strong>T</strong>: Toggle trails</li>
 				<li><strong>F</strong>: Toggle gravity field</li>
 				<li><strong>W</strong>: Toggle gravity wells</li>
@@ -945,15 +1158,19 @@
 				<li><strong>N</strong>: Toggle particle names</li>
 				<li><strong>G</strong>: Toggle particle mass</li>
 				<li><strong>V</strong>: Toggle magnetospheres</li>
+				<li><strong>Q</strong>: Toggle gravitational lensing</li>
 				<li><strong>A</strong>: Add moon</li>
-				<li><strong>H</strong>: Add black hole</li>
 				<li><strong>K</strong>: Add asteroid belt</li>
 				<li><strong>B</strong>: Create binary system</li>
 				<li><strong>M</strong>: Create multi-system</li>
-				<li><strong>C</strong>: Clear canvas</li>
-				<li><strong>D</strong>: Create protodisk</li>
 				<li><strong>R</strong>: Create random system</li>
 				<li><strong>Y</strong>: Create solar system</li>
+				<li><strong>C</strong>: Clear canvas</li>
+				<li><strong>D</strong>: Create protodisk</li>
+				<li><strong>Space</strong>: Pause while held</li>
+				<li><strong>Arrows</strong>: Pan view</li>
+				<li><strong>>/<</strong>: Zoom in/out</li>
+				<li><strong>+/-</strong>: Speed</li>
 				<li><strong>?</strong>: Show/hide this help</li>
 			</ul>
 		</div>
@@ -993,6 +1210,7 @@
             case 'f': toggleGravityField(); break;         // Field (F)
             case 'n': toggleParticleNames(); break;       // Names (N)
             case 'w': toggleGravityWellsAndButton(); break; // Wells (W)
+			case 'q': toggleGravitationalLensing(); break;
             case 'o': toggleOrbitsAndButton(); break;     // Orbits (O)
             case 'x': clearAllParticleOrbits(); break;    // clear orbits (X)
             case 'y': placeSolarSystem(); break;          // solar sYstem (Y)
@@ -1001,8 +1219,27 @@
             case 'v': toggleMagnetospheresAndButton(); break; // Magnetospheres (V - M taken)
             case 'g': toggleParticleMassAndButton(); break;   // Mass (G - M taken)
             case 'u': toggleParticleType(); break;           // matter/antiMatter (U - M taken)
+	
+			case ' ': isPaused = true; break;
 			case '?': toggleHelp(); break;
-        }
+			
+			case 'arrowup': panY -= 20 / zoomLevel; break;
+			case 'arrowdown': panY += 20 / zoomLevel; break;
+			case 'arrowleft': panX -= 20 / zoomLevel; break;
+			case 'arrowright': panX += 20 / zoomLevel; break;
+			case '>': case '=': zoomLevel *= 1.1; break;
+			case '<': case '_': zoomLevel /= 1.1; break;
+
+			case '+': increaseTimeStep(); break;
+			case '-': decreaseTimeStep(); break;
+
+			case 'u': addNeutronStar(); break;
+			case 'i': addWormhole(); break;
+			case 'j': addDarkMatter(); break;
+			case 'z': generateGalaxy(); break;
+		}
+		
+		updateStatusBar();
     });
 </script>
 	</body>
