@@ -315,7 +315,7 @@
 						mass = 1.024e5; // Scaled mass for Neptune
 						break;
 					case 'blackhole': // Nuevo caso para agujero negro
-						mass = 10000; // Masa muy grande para agujero negro
+						mass = 1.989e6*10; // Masa muy grande para agujero negro
 						isBlackHole = true;
 						break;
 					default:
@@ -962,7 +962,7 @@
         function addNeutronStar() {
             var x = width / 2 + (Math.random() - 0.5) * 100;
             var y = height / 2 + (Math.random() - 0.5) * 100;
-            var mass = 50000 + Math.random() * 50000;
+            var mass = 150000 + Math.random() * 50000;
             var particle = new Particle(mass, x, y, 0, 0, "neutron", "Neutron Star");
             particleList.push(particle);
         }
