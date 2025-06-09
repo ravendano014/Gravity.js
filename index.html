@@ -183,6 +183,12 @@
 				setSize(0);
 			}
 
+			// Function to toggle Solar System Scaled
+			function togglecontrolbox() {
+				var controlbox = document.getElementById('controlbox');
+				controlbox.style.display = controlbox.style.display === 'block' ? 'none' : 'block';
+			}
+
 			function handleResize() {
 				var canvas = document.getElementById("canvas");
 				canvas.width = window.innerWidth;
@@ -1237,6 +1243,7 @@
 				<li><strong>+/-</strong>: Speed</li>
 				<li><strong>?</strong>: Show/hide this help</li>
 				<li><strong>H</strong>: Extra Options Box</li>
+				<li><strong>|</strong>: Options Box</li>
 			</ul>
 		</div>
 	<script>
@@ -1301,6 +1308,7 @@
 			case 'u': addNeutronStar(); break;
 			case 'j': addDarkMatter(); break;
 			case 'z': generateGalaxy(); break;
+			case '|': togglecontrolbox(); break;
 		}
 		
 		updateStatusBar();
