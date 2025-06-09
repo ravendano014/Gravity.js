@@ -97,7 +97,7 @@
 				display: none;
 				z-index: 100;
 			}
-			#solarSystemBox {
+			#extraOptionsBox {
 				position: absolute;
 				right: 10px;
 				top: 50px;
@@ -177,9 +177,9 @@
 			}
 
 			// Function to toggle Solar System Scaled
-			function toggleSolarSystemBox() {
-				var solarSystemBox = document.getElementById('SolarSystemBox');
-				solarSystemBox.style.display = solarSystemBox.style.display === 'block' ? 'none' : 'block';
+			function toggleextraOptionsBox() {
+				var extraOptionsBox = document.getElementById('extraOptionsBox');
+				extraOptionsBox.style.display = extraOptionsBox.style.display === 'block' ? 'none' : 'block';
 				setSize(0);
 			}
 
@@ -1180,7 +1180,7 @@
 			<span>| FPS: <span id="fpsCounter">0</span></span>
 		</div>
 		
-		<div id="SolarSystemBox">
+		<div id="extraOptionsBox">
 			<h3>Options</h3>
 				<div class="section-title">Visualization</div>
 				<button onclick="toggleTrails()">Toggle Trails</button></br>
@@ -1236,7 +1236,7 @@
 				<li><strong>>/<</strong>: Zoom in/out</li>
 				<li><strong>+/-</strong>: Speed</li>
 				<li><strong>?</strong>: Show/hide this help</li>
-				<li><strong>H</strong>: Solar System Box</li>
+				<li><strong>H</strong>: Extra Options Box</li>
 			</ul>
 		</div>
 	<script>
@@ -1263,7 +1263,7 @@
             
             // Celestial bodies
             case 'a': addMoon(); break;                   // Add moon (A)
-            case 'h': toggleSolarSystemBox(); break;      // Solar Systema Box (H)
+            case 'h': toggleextraOptionsBox(); break;      // Solar Systema Box (H)
             case 'k': addAsteroidBelt(); break;           // asteroiD (K - D was taken)
             
             // Controls
