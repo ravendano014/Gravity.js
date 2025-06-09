@@ -5,13 +5,16 @@ A Javascript clone of nowykurier's Gravity Toy.
 Gravity [https://ravendano014.github.io/Gravity.js/]
 
 #TODO:
-- [ ] Allow text entry of particle size
-- [ ] Create more detailed instructions
-- [x] Enable particle translation
+- [ ] Correct Physics Black Hole & Neutron Stars
+- [ ] Improve Interface
+- [ ] Make it Funnier
+- [ ] Credit all 
 
 Files minimized with minifier from npm.
 
 * Inspired on [https://ww1.nowykurier.com/toys/gravity/gravity.html?usid=15&utid=34303169423]
 * You can donwload Flash Player 10 [Win] [Stand Alone] and load Gravity.swf (Nostalgic original file)
+  Adobe Player (https://github.com/ravendano014/Gravity.js/raw/refs/heads/master/Flash%20Player%2010%20%5BWin%5D%20%5BStand%20Alone%5D.exe)
+  Gravity.swf (https://github.com/ravendano014/Gravity.js/raw/refs/heads/master/gravity.swf)
 
 ![Captura de Pantalla 1](Blackhole.jpg)
