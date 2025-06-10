@@ -107,18 +107,6 @@
 				display: none;
 				z-index: 100;
 			}
-			#statusBar {
-				position: absolute;
-				bottom: 0;
-				left: 0;
-				width: 100%;
-				background: rgba(0, 0, 0, 0.7);
-				padding: 5px;
-				font-size: 11px;
-				border-top: 1px solid #fff;
-				display: flex;
-				justify-content: space-between;
-			}
 			#zoomLevel {
 				margin-right: 20px;
 			}
@@ -131,8 +119,57 @@
 				font-weight: bold;
 				border-bottom: 1px solid #fff;
 			}
+			#statusBar {
+				position: absolute;
+				bottom: 0;
+				left: 0;
+				width: 100%;
+				background: rgba(0, 0, 0, 0.7);
+				padding: 5px;
+				font-size: 11px;
+				border-top: 1px solid #fff;
+				display: flex;
+				justify-content: space-between;
+				flex-wrap: wrap;
+			}
+			#statusBar span {
+				margin: 0 5px;
+				white-space: nowrap;
+			}
 		</style>
+
 		<script>
+			function updateStatusBar() {
+				const modeNames = {
+					"inverseSquare": "1/r²",
+					"exponential": "e^-r",
+					"arctanSquared": "1/arctan²(r)",
+					"sechSquared": "sech²(r)",
+					"sech": "sech(r)"
+				};
+				
+				document.getElementById("zoomLevel").innerHTML = zoomLevel.toFixed(2) + "x";
+				document.getElementById("panX").innerHTML = Math.round(panX);
+				document.getElementById("panY").innerHTML = Math.round(panY);
+				document.getElementById("simulationTime").innerHTML = "Time: " + simulationTime.toFixed(2);
+				document.getElementById("fpsCounter").innerHTML = fps.toFixed(0);
+				document.getElementById("gravityMode").innerHTML = modeNames[gravityMode];
+				document.getElementById("particleCount").innerHTML = particleList.length;
+			}
+
+			function toggleGravityMode() {
+				const modes = [
+					"inverseSquare",
+					"exponential",
+					"arctanSquared",
+					"sechSquared",
+					"sech"
+				];
+				const currentIndex = modes.indexOf(gravityMode);
+				gravityMode = modes[(currentIndex + 1) % modes.length];
+				updateStatusBar();
+			}
+
 			var interval = -1;
 			var newParticleSize = 100;
 			var currentParticleType = 'matter'; // 'matter' or 'antimatter'
@@ -1182,7 +1219,10 @@
 		<div id="homebox"><a href='#'>Gravity Toy</a></div>
 		<div id="statusBar">
 			<span id="simulationTime">Time: 0</span>
-			<span>| Zoom: <span id="zoomLevel">1.00x</span> | Pan: (<span id="panX">0</span>, <span id="panY">0</span>)</span>
+			<span>| Zoom: <span id="zoomLevel">1.00x</span></span>
+			<span>| Pan: (<span id="panX">0</span>, <span id="panY">0</span>)</span>
+			<span>| Gravity: <span id="gravityMode">1/r²</span></span>
+			<span>| Particles: <span id="particleCount">0</span></span>
 			<span>| FPS: <span id="fpsCounter">0</span></span>
 		</div>
 		
