@@ -119,23 +119,41 @@
 				font-weight: bold;
 				border-bottom: 1px solid #fff;
 			}
-			#statusBar {
-				position: absolute;
-				bottom: 0;
-				left: 0;
-				width: 100%;
-				background: rgba(0, 0, 0, 0.7);
-				padding: 5px;
-				font-size: 11px;
-				border-top: 1px solid #fff;
-				display: flex;
-				justify-content: space-between;
-				flex-wrap: wrap;
-			}
-			#statusBar span {
-				margin: 0 5px;
-				white-space: nowrap;
-			}
+		#statusBar {
+			position: absolute;
+			bottom: 0;
+			left: 0;
+			width: 100%;
+			background: rgba(0, 0, 0, 0.7);
+			padding: 5px;
+			font-size: 11px;
+			border-top: 1px solid #fff;
+			display: flex;
+			justify-content: space-between;
+			flex-wrap: wrap;
+			align-items: center;
+			z-index: 10;
+		}
+		
+		#statusBar span {
+			margin: 0 5px;
+			white-space: nowrap;
+		}
+		
+		#gravityModeSelector {
+			background: black;
+			color: white;
+			border: 1px solid white;
+			font-family: 'Courier New';
+			font-size: 11px;
+			padding: 2px;
+			margin-left: 5px;
+		}
+		
+		.status-section {
+			display: flex;
+			align-items: center;
+		}
 		</style>
 
 		<script>
@@ -279,13 +297,22 @@
 				updateStatusBar();
 			}
         
-			function updateStatusBar() {
-				document.getElementById("zoomLevel").innerHTML = zoomLevel.toFixed(2) + "x";
-				document.getElementById("panX").innerHTML = Math.round(panX);
-				document.getElementById("panY").innerHTML = Math.round(panY);
-				document.getElementById("simulationTime").innerHTML = "Time: " + simulationTime.toFixed(2);
-				document.getElementById("fpsCounter").innerHTML = fps.toFixed(0);
-			}
+		// Reemplazar la función toggleGravityMode con:
+		function changeGravityMode(mode) {
+			gravityMode = mode;
+			updateStatusBar();
+		}
+
+		// Actualizar updateStatusBar:
+		function updateStatusBar() {
+			document.getElementById("zoomLevel").innerHTML = zoomLevel.toFixed(2) + "x";
+			document.getElementById("panX").innerHTML = Math.round(panX);
+			document.getElementById("panY").innerHTML = Math.round(panY);
+			document.getElementById("simulationTime").innerHTML = "Time: " + simulationTime.toFixed(2);
+			document.getElementById("fpsCounter").innerHTML = fps.toFixed(0);
+			document.getElementById("particleCount").innerHTML = particleList.length;
+			document.getElementById("gravityModeSelector").value = gravityMode;
+		}
 
 			function start() {
 				if (interval === -1) {
@@ -1033,90 +1060,92 @@
             particleList.push(particle);
         }
         
-	function generateGalaxy() {
-		clearCanvas();
-		var centerX = width / 2 / zoomLevel - panX / zoomLevel;
-		var centerY = height / 2 / zoomLevel - panY / zoomLevel;
+		function generateGalaxy() {
+			clearCanvas();
+			var centerX = width / 2 / zoomLevel - panX / zoomLevel;
+			var centerY = height / 2 / zoomLevel - panY / zoomLevel;
 
-		// Crear agujero negro central (o núcleo galáctico)
-		var bhMass = 5e5*10; // Masa ligeramente reducida para el núcleo central
-		var blackHole = new Particle(bhMass, centerX, centerY, 0, 0, "matter", "Galactic Core");
-		particleList.push(blackHole);
+			// Crear agujero negro central (o núcleo galáctico)
+			var bhMass = 5e5*10; // Masa ligeramente reducida para el núcleo central
+			var blackHole = new Particle(bhMass, centerX, centerY, 0, 0, "matter", "Galactic Core");
+			particleList.push(blackHole);
 
-		// Parámetros de la galaxia
-		var numStars = 12000; // Número fijo de estrellas
-		var numArms = 12 + Math.floor(Math.random() * 3); // 2-4 brazos espirales
-		var maxGalaxyRadius = 1000; // Distancia máxima desde el centro para las estrellas
-		var minGalaxyRadius = 100; // Distancia mínima para evitar colocar estrellas demasiado cerca del BH
+			// Parámetros de la galaxia
+			var numStars = 12000; // Número fijo de estrellas
+			var numArms = 12 + Math.floor(Math.random() * 3); // 2-4 brazos espirales
+			var maxGalaxyRadius = 1000; // Distancia máxima desde el centro para las estrellas
+			var minGalaxyRadius = 100; // Distancia mínima para evitar colocar estrellas demasiado cerca del BH
 
-		// Coeficientes para los brazos espirales y la curva de rotación
-		var spiralTightness = -1.5 - Math.random() * 0.5; // Controla qué tan ajustada es la espiral
-		var velocityFlatteningFactor = 0.05; // Controla la "planitud" de la curva de rotación para las estrellas exteriores
-		var randomVelocitySpread = 3; // Pequeño componente aleatorio para las velocidades
+			// Coeficientes para los brazos espirales y la curva de rotación
+			var spiralTightness = -1.5 - Math.random() * 0.5; // Controla qué tan ajustada es la espiral
+			var velocityFlatteningFactor = 0.05; // Controla la "planitud" de la curva de rotación para las estrellas exteriores
+			var randomVelocitySpread = 3; // Pequeño componente aleatorio para las velocidades
 
-		for (var i = 0; i < numStars; i++) {
-			var arm = i % numArms;
-			var baseAngle = (arm / numArms) * Math.PI * 2; // Ángulo inicial para cada brazo
+			for (var i = 0; i < numStars; i++) {
+				var arm = i % numArms;
+				var baseAngle = (arm / numArms) * Math.PI * 2; // Ángulo inicial para cada brazo
 
-			// Distancia desde el centro, con más estrellas concentradas más cerca del centro
-			// Usando Math.pow(Math.random(), 1.5) sesga hacia números más pequeños (más estrellas internas)
-			var distance = minGalaxyRadius + Math.pow(Math.random(), 1.5) * (maxGalaxyRadius - minGalaxyRadius);
+				// Distancia desde el centro, con más estrellas concentradas más cerca del centro
+				// Usando Math.pow(Math.random(), 1.5) sesga hacia números más pequeños (más estrellas internas)
+				var distance = minGalaxyRadius + Math.pow(Math.random(), 1.5) * (maxGalaxyRadius - minGalaxyRadius);
 
-			// Calcular el ángulo espiral
-			var spiralAngle = baseAngle + Math.log(distance / minGalaxyRadius) * spiralTightness;
-			
-			// Añadir algo de ruido radial y tangencial a la posición para un aspecto más natural
-			var noiseAngle = (Math.random() - 0.5) * (Math.PI / 10); // Ruido de +/- 18 grados
-			var noiseDistance = (Math.random() - 0.5) * 20; // Ruido de +/- 20 unidades
-			
-			var x = centerX + (distance + noiseDistance) * Math.cos(spiralAngle + noiseAngle);
-			var y = centerY + (distance + noiseDistance) * Math.sin(spiralAngle + noiseAngle);
+				// Calcular el ángulo espiral
+				var spiralAngle = baseAngle + Math.log(distance / minGalaxyRadius) * spiralTightness;
+				
+				// Añadir algo de ruido radial y tangencial a la posición para un aspecto más natural
+				var noiseAngle = (Math.random() - 0.5) * (Math.PI / 10); // Ruido de +/- 18 grados
+				var noiseDistance = (Math.random() - 0.5) * 20; // Ruido de +/- 20 unidades
+				
+				var x = centerX + (distance + noiseDistance) * Math.cos(spiralAngle + noiseAngle);
+				var y = centerY + (distance + noiseDistance) * Math.sin(spiralAngle + noiseAngle);
 
-			// Calcular la velocidad orbital (aproximando una curva de rotación plana)
-			// v = sqrt(G * M_efectiva / r)
-			// M_efectiva incluye el agujero negro central y un componente de masa distribuida (halo de materia oscura)
-			
-			// Aproximación simplificada de una curva de rotación plana:
-			var keplerianVelocity = Math.sqrt(G * bhMass / distance);
-			// Un término inspirado en la "materia oscura" que añade velocidad constante para distancias mayores
-			var haloVelocity = velocityFlatteningFactor * distance;
+				// Calcular la velocidad orbital (aproximando una curva de rotación plana)
+				// v = sqrt(G * M_efectiva / r)
+				// M_efectiva incluye el agujero negro central y un componente de masa distribuida (halo de materia oscura)
+				
+				// Aproximación simplificada de una curva de rotación plana:
+				var keplerianVelocity = Math.sqrt(G * bhMass / distance);
+				// Un término inspirado en la "materia oscura" que añade velocidad constante para distancias mayores
+				var haloVelocity = velocityFlatteningFactor * distance;
 
-			var orbitalSpeed = keplerianVelocity + haloVelocity; // Suma de los componentes
-			
-			// Asegurarse de que orbitalSpeed sea un valor razonable; evitar NaN o valores extremadamente grandes
-			if (isNaN(orbitalSpeed) || !isFinite(orbitalSpeed)) {
-				orbitalSpeed = 0; // Por defecto a 0 si el cálculo es incorrecto (por ejemplo, distancia muy pequeña)
+				var orbitalSpeed = keplerianVelocity + haloVelocity; // Suma de los componentes
+				
+				// Asegurarse de que orbitalSpeed sea un valor razonable; evitar NaN o valores extremadamente grandes
+				if (isNaN(orbitalSpeed) || !isFinite(orbitalSpeed)) {
+					orbitalSpeed = 0; // Por defecto a 0 si el cálculo es incorrecto (por ejemplo, distancia muy pequeña)
+				}
+				
+				// Introducir algo de velocidad perpendicular para la estabilidad
+				var vx = -orbitalSpeed * Math.sin(spiralAngle);
+				var vy = orbitalSpeed * Math.cos(spiralAngle);
+
+				// Añadir una pequeña perturbación aleatoria a la velocidad para un movimiento más natural
+				vx += (Math.random() - 0.5) * randomVelocitySpread;
+				vy += (Math.random() - 0.5) * randomVelocitySpread;
+
+				// Masa aleatoria de las estrellas (mayormente estrellas pequeñas, pocas grandes)
+				// Ajustar el rango de masa para evitar estrellas demasiado dominantes que desestabilicen la galaxia
+				var mass = 50 + Math.pow(Math.random(), 4) * 2000; // Sesgo hacia estrellas más pequeñas, máx 2050
+
+				var star = new Particle(mass, x, y, vx, vy, "matter", "Star " + (i + 1));
+
+				// Color basado en la masa (caliente = azul, fría = roja), refinado para galaxias
+				if (mass > 1500) { // Estrellas grandes y brillantes
+					star.color = [255, 255, 150]; // Amarillento-blanco
+				} else if (mass > 500) { // Estrellas medianas
+					star.color = [255, 255, 255]; // Blanco
+				} else if (mass > 200) { // Estrellas más pequeñas y calientes
+					star.color = [150, 200, 255]; // Azul-blanco
+				} else { // Estrellas más pequeñas y frías (las más comunes)
+					star.color = [255, 180, 180]; // Rojizo
+				}
+				star.color[3] = (star.color[0] << 16 | star.color[1] << 8 | star.color[2]).toString(16);
+
+				particleList.push(star);
 			}
-			
-			// Introducir algo de velocidad perpendicular para la estabilidad
-			var vx = -orbitalSpeed * Math.sin(spiralAngle);
-			var vy = orbitalSpeed * Math.cos(spiralAngle);
+	}
 
-			// Añadir una pequeña perturbación aleatoria a la velocidad para un movimiento más natural
-			vx += (Math.random() - 0.5) * randomVelocitySpread;
-			vy += (Math.random() - 0.5) * randomVelocitySpread;
 
-			// Masa aleatoria de las estrellas (mayormente estrellas pequeñas, pocas grandes)
-			// Ajustar el rango de masa para evitar estrellas demasiado dominantes que desestabilicen la galaxia
-			var mass = 50 + Math.pow(Math.random(), 4) * 2000; // Sesgo hacia estrellas más pequeñas, máx 2050
-
-			var star = new Particle(mass, x, y, vx, vy, "matter", "Star " + (i + 1));
-
-			// Color basado en la masa (caliente = azul, fría = roja), refinado para galaxias
-			if (mass > 1500) { // Estrellas grandes y brillantes
-				star.color = [255, 255, 150]; // Amarillento-blanco
-			} else if (mass > 500) { // Estrellas medianas
-				star.color = [255, 255, 255]; // Blanco
-			} else if (mass > 200) { // Estrellas más pequeñas y calientes
-				star.color = [150, 200, 255]; // Azul-blanco
-			} else { // Estrellas más pequeñas y frías (las más comunes)
-				star.color = [255, 180, 180]; // Rojizo
-			}
-			star.color[3] = (star.color[0] << 16 | star.color[1] << 8 | star.color[2]).toString(16);
-
-			particleList.push(star);
-		}
-}
 	</script>
 	</head>
 	<body style="background-color:black">
@@ -1218,12 +1247,27 @@
 		<canvas id="canvas" style="z-index:-1;position:absolute;left: 0px;top: 0px;"></canvas>
 		<div id="homebox"><a href='#'>Gravity Toy</a></div>
 		<div id="statusBar">
-			<span id="simulationTime">Time: 0</span>
-			<span>| Zoom: <span id="zoomLevel">1.00x</span></span>
-			<span>| Pan: (<span id="panX">0</span>, <span id="panY">0</span>)</span>
-			<span>| Gravity: <span id="gravityMode">1/r²</span></span>
-			<span>| Particles: <span id="particleCount">0</span></span>
-			<span>| FPS: <span id="fpsCounter">0</span></span>
+			<div class="status-section">
+				<span id="simulationTime">Time: 0</span>
+				<span>| Zoom: <span id="zoomLevel">1.00x</span></span>
+				<span>| Pan: (<span id="panX">0</span>, <span id="panY">0</span>)</span>
+			</div>
+			
+			<div class="status-section">
+				<span>Gravity:</span>
+				<select id="gravityModeSelector" onchange="changeGravityMode(this.value)">
+					<option value="inverseSquare">1/r² (Newton)</option>
+					<option value="exponential">e^-r</option>
+					<option value="arctanSquared">1/arctan²(r)</option>
+					<option value="sechSquared">sech²(r)</option>
+					<option value="sech">sech(r)</option>
+				</select>
+			</div>
+			
+			<div class="status-section">
+				<span>Ver: <span>1.20251026</span></span>
+				<span>| FPS: <span id="fpsCounter">0</span></span>
+			</div>
 		</div>
 		
 		<div id="extraOptionsBox">
