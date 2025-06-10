@@ -8,7 +8,7 @@ Gravity [https://ravendano014.github.io/Gravity.js/]
 - [ ] Correct Physics Black Hole & Neutron Stars
 - [ ] Improve Interface
 - [ ] Make it Funnier
-- [ ] Credit all 
+- [ ] Credit all [Projects by Thatcher Chamberlin](https://jthatch.com/Gravity.js/main.html)
 
 Files minimized with minifier from npm.
 
