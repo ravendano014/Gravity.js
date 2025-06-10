@@ -209,13 +209,13 @@
                 init();
                 start();
                 // Initialize magnetosphere button text
-                document.getElementById("toggleMagnetospheresBtn").innerHTML = showMagnetospheres ? "Hide Magnetospheres" : "Show Magnetospheres";
+                document.getElementById("toggleMagnetospheresBtn").innerHTML = showMagnetospheres ? "Hide Magnetospheres (V)" : "Show Magnetospheres (V)";
                 // Initialize orbit button text
-                document.getElementById("toggleOrbitsBtn").innerHTML = showOrbits ? "Hide Orbits" : "Show Orbits";
+                document.getElementById("toggleOrbitsBtn").innerHTML = showOrbits ? "Hide Orbits (O)" : "Show Orbits (O)";
                 // NEW: Initialize gravity well button text
-                document.getElementById("toggleGravityWellsBtn").innerHTML = showGravityWells ? "Hide Gravity Wells" : "Show Gravity Wells";
+                document.getElementById("toggleGravityWellsBtn").innerHTML = showGravityWells ? "Hide Gravity Wells (W)" : "Show Gravity Wells (W)";
                 // NEW: Initialize mass button text
-                document.getElementById("toggleMassBtn").innerHTML = showParticleMass ? "Hide Mass" : "Show Mass";
+                document.getElementById("toggleMassBtn").innerHTML = showParticleMass ? "Hide Mass (M)" : "Show Mass (M)";
                 // Set initial moon mass based on the default selected option
                 setMoonMass(document.getElementById("moonSelector").value);
                 // Set initial planet mass based on the default selected option
@@ -253,11 +253,11 @@
 			}
         
 			function updateButtonTexts() {
-				document.getElementById("toggleMagnetospheresBtn").innerHTML = showMagnetospheres ? "Hide Magnetospheres" : "Show Magnetospheres";
-				document.getElementById("toggleOrbitsBtn").innerHTML = showOrbits ? "Hide Orbits" : "Show Orbits";
-				document.getElementById("toggleGravityWellsBtn").innerHTML = showGravityWells ? "Hide Gravity Wells" : "Show Gravity Wells";
-				document.getElementById("toggleMassBtn").innerHTML = showParticleMass ? "Hide Mass" : "Show Mass";
-				document.getElementById("toggleLensingBtn").innerHTML = showGravitationalLensing ? "Hide Lensing" : "Show Lensing";
+				document.getElementById("toggleMagnetospheresBtn").innerHTML = showMagnetospheres ? "Hide Magnetospheres (V)" : "Show Magnetospheres (V)";
+				document.getElementById("toggleOrbitsBtn").innerHTML = showOrbits ? "Hide Orbits (O)" : "Show Orbits (O)";
+				document.getElementById("toggleGravityWellsBtn").innerHTML = showGravityWells ? "Hide Gravity Wells (W)" : "Show Gravity Wells (W)";
+				document.getElementById("toggleMassBtn").innerHTML = showParticleMass ? "Hide Mass (M)" : "Show Mass (M)";
+				document.getElementById("toggleLensingBtn").innerHTML = showGravitationalLensing ? "Hide Lensing (Q)" : "Show Lensing (Q)";
 				document.getElementById("particleTypeBtn").innerHTML = currentParticleType.charAt(0).toUpperCase() + currentParticleType.slice(1);
 			}
         
@@ -418,7 +418,7 @@
 				// This function will be defined in Gravity.min.js
 				// For now, it will simply toggle the state
 				gravityFieldEnabled = !gravityFieldEnabled;
-				document.getElementById("gravityFieldBtn").innerHTML = gravityFieldEnabled ? "Hide Field" : "Show Field";
+				document.getElementById("gravityFieldBtn").innerHTML = gravityFieldEnabled ? "Hide Field (F)" : "Show Field (F)";
 			}
 
             // Function to toggle magnetospheres and update button text
@@ -427,7 +427,7 @@
                 toggleMagnetospheres();
 
                 // Update button text
-                document.getElementById("toggleMagnetospheresBtn").innerHTML = showMagnetospheres ? "Hide Magnetospheres" : "Show Magnetospheres";
+                document.getElementById("toggleMagnetospheresBtn").innerHTML = showMagnetospheres ? "Hide Magnetospheres (V)" : "Show Magnetospheres (V)";
             }
 
             // Function to toggle orbits and update button text
@@ -436,7 +436,7 @@
                 toggleOrbits();
 
                 // Update button text
-                document.getElementById("toggleOrbitsBtn").innerHTML = showOrbits ? "Hide Orbits" : "Show Orbits";
+                document.getElementById("toggleOrbitsBtn").innerHTML = showOrbits ? "Hide Orbits (O)" : "Show Orbits (O)";
             }
 
             // NEW: Function to toggle gravity wells and update button text
@@ -445,7 +445,7 @@
                 toggleGravityWells();
 
                 // Update button text
-                document.getElementById("toggleGravityWellsBtn").innerHTML = showGravityWells ? "Hide Gravity Wells" : "Show Gravity Wells";
+                document.getElementById("toggleGravityWellsBtn").innerHTML = showGravityWells ? "Hide Gravity Wells (W)" : "Show Gravity Wells (W)";
             }
 
             // NEW: Function to toggle particle mass and update button text
@@ -454,7 +454,7 @@
                 toggleParticleMass();
 
                 // Update button text
-                document.getElementById("toggleMassBtn").innerHTML = showParticleMass ? "Hide Mass" : "Show Mass";
+                document.getElementById("toggleMassBtn").innerHTML = showParticleMass ? "Hide Mass (M)" : "Show Mass (M)";
             }
 
             function placeSolarSystem() {
@@ -1155,31 +1155,31 @@
 			<div id="controlbox" style="z-index:4">
                 <div id="particleCount" style="margin-bottom: 5px;">Particles: 0</div>
             	<div class="section-title">Mass Controls</div>
-				<button id="particleTypeBtn" onclick="toggleParticleType()">Matter</button></br>
+				<button id="particleTypeBtn" onclick="toggleParticleType()">Matter (U)</button></br>
 				<table>
-					<tr>Mass:<input type="text" value="1.0e3" class="txt" style="width:50px;" id="mass"></tr></br>
-					<tr><button onclick="setSize(1 , 'Dust')">Dust</button></tr></br>
-					<tr><button onclick="setSize(100 , 'Tiny')">Tiny</button></tr></br>
-					<tr><button onclick="setSize(1000 , 'Small')">Small</button></tr></br>
-					<tr><button onclick="setSize(10000 , 'Medium')">Medium</button></tr></br>
-					<tr><button onclick="setSize(100000 , 'Huge')">Huge</button></tr></br>
-					<tr><button onclick="setSize(1000000 , 'Enormous')">Enormous</button></tr>
+					<tr><td>Mass:<input type="text" value="1.0e3" class="txt" style="width:50px;" id="mass"> 0-9</td></tr></br>
+					<tr><button onclick="setSize(1 , 'Dust')">Dust (0)</button></tr></br>
+					<tr><button onclick="setSize(100 , 'Tiny')">Tiny (1)</button></tr></br>
+					<tr><button onclick="setSize(1000 , 'Small')">Small (2)</button></tr></br>
+					<tr><button onclick="setSize(10000 , 'Medium')">Medium (3)</button></tr></br>
+					<tr><button onclick="setSize(100000 , 'Huge')">Huge (4)</button></tr></br>
+					<tr><button onclick="setSize(1000000 , 'Enormous')">Enormous (5)</button></tr>
 				</table>
 				<div class="section-title">Particle Types</div>
-				<button onclick="addMoon()">Add Moon</button></br>
+				<button onclick="addMoon()">Add Moon (A)</button></br>
 
-				<button onclick="addNeutronStar()">Add Neutron Star</button></br>
-				<button onclick="addDarkMatter()">Add Dark Matter</button></br>
+				<button onclick="addNeutronStar()">Add Neutron Star (/)</button></br>
+				<button onclick="addDarkMatter()">Add Dark Matter (J)</button></br>
 
 				<div class="section-title">System Generation</div>
-				<button onclick="generateProto()">Protodisk</button></br>
-				<button onclick="generateRandomSystem()">Random System</button></br>
-				<button onclick="generateRandomMultiSystem()">Multi-System</button></br>
+				<button onclick="generateProto()">Protodisk (D)</button></br>
+				<button onclick="generateRandomSystem()">Random System (R)</button></br>
+				<button onclick="generateRandomMultiSystem()">Multi-System (M)</button></br>
 				<button onclick="generateMultiMoonSystem()">Moon System</button></br>
-				<button onclick="generateBinarySystem()">Binary System</button></br>
-				<button onclick="generateGalaxy()">Spiral Galaxy</button></br>
-				<button onclick="placeSolarSystem()">Solar System</button></br>
-				<button onclick="addAsteroidBelt()">Asteroid Belt</button></br>
+				<button onclick="generateBinarySystem()">Binary System (B)</button></br>
+				<button onclick="generateGalaxy()">Spiral Galaxy (Z)</button></br>
+				<button onclick="placeSolarSystem()">Solar System (Y)</button></br>
+				<button onclick="addAsteroidBelt()">Asteroid Belt (K)</button></br>
 
 				<table>
 						<tr>
@@ -1249,7 +1249,7 @@
 		<div id="statusBar">
 			<div class="status-section">
 				<span id="simulationTime">Time: 0</span>
-				<span>| Zoom: <span id="zoomLevel">1.00x</span></span>
+				<span>| Zoom: <span id="zoomLevel">1.00x</span> > Inc. < Dec.</span>
 				<span>| Pan: (<span id="panX">0</span>, <span id="panY">0</span>)</span>
 			</div>
 			
@@ -1273,23 +1273,23 @@
 		<div id="extraOptionsBox">
 			<h3>Options</h3>
 				<div class="section-title">Visualization</div>
-				<button onclick="toggleTrails()">Toggle Trails</button></br>
-				<button id="gravityFieldBtn" onclick="toggleGravityField()">Show Field</button></br>
-				<button id="toggleNamesBtn" onclick="toggleParticleNames()">Show Names</button></br>
-				<button id="toggleMassBtn" onclick="toggleParticleMassAndButton()">Show Mass</button></br>
-				<button id="toggleMagnetospheresBtn" onclick="toggleMagnetospheresAndButton()">Show Magnetospheres</button></br>
-				<button id="toggleOrbitsBtn" onclick="toggleOrbitsAndButton()">Show Orbits</button></br>
-				<button id="toggleGravityWellsBtn" onclick="toggleGravityWellsAndButton()">Show Gravity Wells</button></br>
-				<button id="toggleLensingBtn" onclick="toggleGravitationalLensing()">Show Lensing</button></br>
-				<button onclick="clearAllParticleOrbits()">Clear Orbits</button></br>
+				<button onclick="toggleTrails()">Toggle Trails (T)</button></br>
+				<button id="gravityFieldBtn" onclick="toggleGravityField()">Show Field (F)</button></br>
+				<button id="toggleNamesBtn" onclick="toggleParticleNames()">Show Names (N)</button></br>
+				<button id="toggleMassBtn" onclick="toggleParticleMassAndButton()">Show Mass (M)</button></br>
+				<button id="toggleMagnetospheresBtn" onclick="toggleMagnetospheresAndButton()">Show Magnetospheres (Q)</button></br>
+				<button id="toggleOrbitsBtn" onclick="toggleOrbitsAndButton()">Show Orbits (O)</button></br>
+				<button id="toggleGravityWellsBtn" onclick="toggleGravityWellsAndButton()">Show Gravity Wells (V)</button></br>
+				<button id="toggleLensingBtn" onclick="toggleGravitationalLensing()">Show Lensing (W)</button></br>
+				<button onclick="clearAllParticleOrbits()">Clear Orbits (X)</button></br>
             
 				<div class="section-title">Simulation Control</div>
-				<button onclick="start()">Start</button></br>
-				<button onclick="stop()">Stop</button></br>
-				<button onclick="togglePause()">Pause/Resume</button></br>
-				<button onclick="increaseTimeStep()">Faster</button></br>
-				<button onclick="decreaseTimeStep()">Slower</button></br>
-				<button onclick="clearCanvas()">Clear</button></br>
+				<button onclick="start()">Start (S)</button></br>
+				<button onclick="stop()">Stop (S)</button></br>
+				<button onclick="togglePause()">Pause/Resume (P)</button></br>
+				<button onclick="increaseTimeStep()">Faster (+)</button></br>
+				<button onclick="decreaseTimeStep()">Slower (-)</button></br>
+				<button onclick="clearCanvas()">Clear (C)</button></br>
 				
 				<div class="section-title">Camera</div>
 				<button onclick="centerView()">Center View</button></br>
@@ -1325,8 +1325,8 @@
 				<li><strong>Arrows</strong>: Pan view</li>
 				<li><strong>>/<</strong>: Zoom in/out</li>
 				<li><strong>+/-</strong>: Speed</li>
-				<li><strong>?</strong>: Show/hide this help</li>
-				<li><strong>H</strong>: Extra Options Box</li>
+				<li><strong>H</strong>: Show/hide this help</li>
+				<li><strong>?</strong>: Extra Options Box</li>
 				<li><strong>|</strong>: Options Box</li>
 			</ul>
 		</div>
@@ -1354,7 +1354,7 @@
             
             // Celestial bodies
             case 'a': addMoon(); break;                   // Add moon (A)
-            case 'h': toggleextraOptionsBox(); break;      // Solar Systema Box (H)
+            case '?': toggleextraOptionsBox(); break;      // Solar Systema Box (H)
             case 'k': addAsteroidBelt(); break;           // asteroiD (K - D was taken)
             
             // Controls
@@ -1377,7 +1377,7 @@
             case 'u': toggleParticleType(); break;           // matter/antiMatter (U - M taken)
 	
 			case ' ': isPaused = true; break;
-			case '?': toggleHelp(); break;
+			case 'h': toggleHelp(); break;
 			
 			case 'arrowup': panY -= 20 / zoomLevel; break;
 			case 'arrowdown': panY += 20 / zoomLevel; break;
@@ -1389,7 +1389,7 @@
 			case '+': increaseTimeStep(); break;
 			case '-': decreaseTimeStep(); break;
 
-			case 'u': addNeutronStar(); break;
+			case '/': addNeutronStar(); break;
 			case 'j': addDarkMatter(); break;
 			case 'z': generateGalaxy(); break;
 			case '|': togglecontrolbox(); break;
