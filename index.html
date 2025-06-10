@@ -241,7 +241,7 @@
 			// Function to toggle Solar System Scaled
 			function togglecontrolbox() {
 				var controlbox = document.getElementById('controlbox');
-				controlbox.style.display = controlbox.style.display === 'block' ? 'none' : 'block';
+				controlbox.style.display = controlbox.style.display === 'none' ? 'block' : 'none';
 			}
 
 			function handleResize() {
@@ -1246,7 +1246,7 @@
 		</div>
 		<canvas id="canvas" style="z-index:-1;position:absolute;left: 0px;top: 0px;"></canvas>
 		<div id="homebox"><a href='#'>Gravity Toy</a></div>
-		<div id="statusBar">
+		<div id="statusBar" style="z-index:4">
 			<div class="status-section">
 				<span id="simulationTime">Time: 0</span>
 				<span>| Zoom: <span id="zoomLevel">1.00x</span> > Inc. < Dec.</span>
@@ -1264,13 +1264,13 @@
 				</select>
 			</div>
 			
-			<div class="status-section">
-				<span>Ver: <span>1.20251026</span></span>
+			<div class="status-section" style="z-index:4">
+				<span>Ver: <span>1.20251026</span><button onclick="togglecontrolbox();">Control Box</button><button onclick="toggleextraOptionsBox();">Extra Controls</button><button onclick="toggleHelp();">Help Controls</button></span>
 				<span>| FPS: <span id="fpsCounter">0</span></span>
 			</div>
 		</div>
 		
-		<div id="extraOptionsBox">
+		<div id="extraOptionsBox" style="z-index:4">
 			<h3>Options</h3>
 				<div class="section-title">Visualization</div>
 				<button onclick="toggleTrails()">Toggle Trails (T)</button></br>
@@ -1298,7 +1298,7 @@
 
 		</div>
 		<!-- Hotkey Help Box -->
-		<div id="hotkeyHelp">
+		<div id="hotkeyHelp" style="z-index:4">
 			<h3>Keyboard Shortcuts</h3>
 			<ul>
 				<li><strong>0-9</strong>: Set particle size presets</li>
