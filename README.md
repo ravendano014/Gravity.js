@@ -2,7 +2,7 @@ A Javascript clone of nowykurier's Gravity Toy.
 
 #Improvements
 
-Gravity [https://ravendano014.github.io/Gravity.js/]
+DEMO [https://ravendano014.github.io/Gravity.js/]
 
 #TODO:
 - [ ] Correct Physics Black Hole & Neutron Stars
