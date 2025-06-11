@@ -1332,6 +1332,7 @@
 				<button onclick="placeFigure8Orbit()">Infinity</button></br>
         		<button onclick="placeEclipseScenario()">Eclipse</button></br>
         		<button onclick="placeLagrangeEquilateral()">Triangle</button></br>
+				<button id="lagrangePointsButton" onclick="toggleLagrangePoints()">Lagrange Pts: OFF</button>
 		</div>
 	<script>
     // Hotkeys configuration
@@ -1378,6 +1379,7 @@
             case 'v': toggleMagnetospheresAndButton(); break; // Magnetospheres (V - M taken)
             case 'm': toggleParticleMassAndButton(); break;   // Mass (G - M taken)
             case 'u': toggleParticleType(); break;           // matter/antiMatter (U - M taken)
+			case '*': toggleLagrangePoints(); break; // Lagrange Pts (*)
 	
 			case ' ': isPaused = true; break;
 			case 'h': toggleHelp(); break;
