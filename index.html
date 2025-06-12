@@ -356,7 +356,7 @@
 
 			}
 
-			function setSize(size, name = "New Particle", density=1, color=[], type="matter"){
+			function setSize(size, name = "New Particle", density=1, color=[255,255,255], type="matter"){
 				document.getElementById("mass").value=size.toExponential(1).replace("+","");
 				// `setNewMass()` es una función definida en Gravity.min.js
 				setNewMass(size, name, density, color, type);
