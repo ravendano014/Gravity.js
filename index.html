@@ -1,4 +1,4 @@
-<html>
+<html></html>
 	<head>
 		<title>Gravity Toy</title>
 		<script src="Gravity.min.js"></script>
@@ -356,10 +356,10 @@
 
 			}
 
-			function setSize(size, name = "New Particle", type="matter"){
+			function setSize(size, name = "New Particle", density=1, color=[], type="matter"){
 				document.getElementById("mass").value=size.toExponential(1).replace("+","");
 				// `setNewMass()` es una función definida en Gravity.min.js
-				setNewMass(size, name, type);
+				setNewMass(size, name, density, color, type);
 			}
 
 			function clearCanvas(){
@@ -1163,11 +1163,12 @@
 					<tr><button onclick="setSize(10000 , 'Medium')">Medium (3)</button></tr></br>
 					<tr><button onclick="setSize(100000 , 'Huge')">Huge (4)</button></tr></br>
 					<tr><button onclick="setSize(1000000 , 'Enormous')">Enormous (5)</button></tr>
+					<tr><button onclick="setSize(300000000 * ( 1 + (Math.random()))  , 'Supernova', 0.5, [253, 238, 150])">Supernova</button></tr>
+					<tr><button onclick="setSize(300000000 * ( 1 + (Math.random()))  , 'Neutron Star', 9, [173, 216, 230], 'neutron')">Neutron Star</button></tr>
+					<tr><button onclick="setSize(1000000000 * ( 1 + (Math.random()))  , 'Black Hole', 10, [128,128,128],'blcackhole')">Black Hole</button></tr>
 				</table>
 				<div class="section-title">Particle Types</div>
 				<button onclick="addMoon()">Add Moon (A)</button></br>
-
-				<button onclick="addNeutronStar()">Add Neutron Star (/)</button></br>
 				<button onclick="addDarkMatter()">Add Dark Matter (J)</button></br>
 
 				<div class="section-title">System Generation</div>
@@ -1237,9 +1238,7 @@
 					<tr><button onclick="setSize(28570 , 'Saturn')">Satrun</button></tr>
 					<tr><button onclick="setSize(4360 , 'Uranus')">Uranus</button></tr>
 					<tr><button onclick="setSize(5150 , 'Neptune')">Neptune</button></tr>
-					<tr><button onclick="setSize(300000000 * ( 1 + (Math.random()))  , 'Supernova')">Supernova</button></tr>
-					<tr><button onclick="setSize(300000000 * ( 1 + (Math.random()))  , 'neutron')">Neutron Star</button></tr>
-					<tr><button onclick="setSize(1000000000 * ( 1 + (Math.random()))  , 'Black Hole')">Black Hole</button></tr>
+
 				</table>
 			</div>
 		</div>
