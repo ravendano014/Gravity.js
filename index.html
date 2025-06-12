@@ -356,7 +356,7 @@
 
 			}
 
-			function setSize(size, name = "New Particle", density=1, color=[255,255,255], type="matter"){
+			function setSize(size, name = "New Particle", density=1, color, type="matter"){
 				document.getElementById("mass").value=size.toExponential(1).replace("+","");
 				// `setNewMass()` es una función definida en Gravity.min.js
 				setNewMass(size, name, density, color, type);
@@ -1165,7 +1165,7 @@
 					<tr><button onclick="setSize(1000000 , 'Enormous')">Enormous (5)</button></tr>
 					<tr><button onclick="setSize(300000000 * ( 1 + (Math.random()))  , 'Supernova', 0.5, [253, 238, 150])">Supernova</button></tr>
 					<tr><button onclick="setSize(300000000 * ( 1 + (Math.random()))  , 'Neutron Star', 9, [173, 216, 230], 'neutron')">Neutron Star</button></tr>
-					<tr><button onclick="setSize(1000000000 * ( 1 + (Math.random()))  , 'Black Hole', 10, [128,128,128],'blcackhole')">Black Hole</button></tr>
+					<tr><button onclick="setSize(1000000000 * ( 1 + (Math.random()))  , 'Black Hole', 10, [128,128,128])">Black Hole</button></tr>
 				</table>
 				<div class="section-title">Particle Types</div>
 				<button onclick="addMoon()">Add Moon (A)</button></br>
