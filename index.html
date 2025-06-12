@@ -1056,7 +1056,7 @@
             var x = width / 2 + (Math.random() - 0.5) * 300;
             var y = height / 2 + (Math.random() - 0.5) * 300;
             var mass = 10000 + Math.random() * 40000;
-            var particle = new Particle(mass, x, y, 0, 0, "dark", "Dark Matter");
+            var particle = new Particle(mass, x, y, 0, 0, "dark", "Dark Matter",0.10, [0,0,0]);
             particleList.push(particle);
         }
         
@@ -1165,7 +1165,7 @@
 					<tr><button onclick="setSize(1000000 , 'Enormous')">Enormous (5)</button></tr>
 					<tr><button onclick="setSize(300000000 * ( 1 + (Math.random()))  , 'Supernova', 0.5, [253, 238, 150])">Supernova</button></tr>
 					<tr><button onclick="setSize(300000000 * ( 1 + (Math.random()))  , 'Neutron Star', 9, [173, 216, 230], 'neutron')">Neutron Star</button></tr>
-					<tr><button onclick="setSize(1000000000 * ( 1 + (Math.random()))  , 'Black Hole', 10, [128,128,128])">Black Hole</button></tr>
+					<tr><button onclick="setSize(1000000000 * ( 1 + (Math.random()))  , 'Black Hole', 10, [128,128,128], 'blackhole') ">Black Hole</button></tr>
 				</table>
 				<div class="section-title">Particle Types</div>
 				<button onclick="addMoon()">Add Moon (A)</button></br>
