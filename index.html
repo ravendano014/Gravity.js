@@ -1046,17 +1046,25 @@
         function addNeutronStar() {
             var x = width / 2 + (Math.random() - 0.5) * 100;
             var y = height / 2 + (Math.random() - 0.5) * 100;
-            var mass = 150000 + Math.random() * 50000;
-            var particle = new Particle(mass, x, y, 0, 0, "neutron", "Neutron Star");
+            var mass = 15000000 + Math.random() * 50000;
+            var particle = new Particle(mass, x, y, 0, 0, "neutron", "Neutron Star", 9);
             particleList.push(particle);
         }
         
+		// New particle type functions
+        function addBlackHole() {
+            var x = width / 2 + (Math.random() - 0.5) * 100;
+            var y = height / 2 + (Math.random() - 0.5) * 100;
+            var mass = 150000000 + Math.random() * 50000;
+            var particle = new Particle(mass, x, y, 0, 0, "blackhole", "Black Hole", 10);
+            particleList.push(particle);
+        }
         
         function addDarkMatter() {
-            var x = width / 2 + (Math.random() - 0.5) * 300;
-            var y = height / 2 + (Math.random() - 0.5) * 300;
-            var mass = 10000 + Math.random() * 40000;
-            var particle = new Particle(mass, x, y, 0, 0, "dark", "Dark Matter",0.10, [0,0,0]);
+            var x = width / 2 + (Math.random() - 0.5) * (6750 * Math.random() );
+            var y = height / 2 + (Math.random() - 0.5) * (3625 * Math.random());
+            var mass = 0;
+            var particle = new Particle(mass, x, y, 0, 0, "dark", "Dark Matter",-1, [10,10,10]);
             particleList.push(particle);
         }
         
@@ -1067,7 +1075,7 @@
 
 			// Crear agujero negro central (o núcleo galáctico)
 			var bhMass = 5e5*10; // Masa ligeramente reducida para el núcleo central
-			var blackHole = new Particle(bhMass, centerX, centerY, 0, 0, "matter", "Galactic Core");
+			var blackHole = new Particle(bhMass, centerX, centerY, 0, 0, "blackhole", "Galactic Core", 10);
 			particleList.push(blackHole);
 
 			// Parámetros de la galaxia
@@ -1164,8 +1172,8 @@
 					<tr><button onclick="setSize(100000 , 'Huge')">Huge (4)</button></tr></br>
 					<tr><button onclick="setSize(1000000 , 'Enormous')">Enormous (5)</button></tr>
 					<tr><button onclick="setSize(300000000 * ( 1 + (Math.random()))  , 'Supernova', 0.5, [253, 238, 150])">Supernova</button></tr>
-					<tr><button onclick="setSize(300000000 * ( 1 + (Math.random()))  , 'Neutron Star', 9, [173, 216, 230])">Neutron Star</button></tr>
-					<tr><button onclick="setSize(1000000000 * ( 1 + (Math.random()))  , 'Black Hole', 10, [128,128,128]) ">Black Hole</button></tr>
+					<tr><button onclick="addNeutronStar();">Neutron Star</button></tr>
+					<tr><button onclick="addBlackHole();">Black Hole</button></tr>
 				</table>
 				<div class="section-title">Particle Types</div>
 				<button onclick="addMoon()">Add Moon (A)</button></br>
