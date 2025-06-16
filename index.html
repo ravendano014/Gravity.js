@@ -1153,6 +1153,10 @@
 			}
 	}
 
+	function getType(){
+	    toggleParticleType();
+	} 
+	
 
 	</script>
 	</head>
@@ -1165,15 +1169,15 @@
 				<button id="particleTypeBtn" onclick="toggleParticleType()">Matter (U)</button></br>
 				<table>
 					<tr><td>Mass:<input type="text" value="1.0e3" class="txt" style="width:50px;" id="mass"> 0-9</td></tr></br>
-					<tr><button onclick="setSize(1 , 'Dust')">Dust (0)</button></tr></br>
-					<tr><button onclick="setSize(100 , 'Tiny')">Tiny (1)</button></tr></br>
-					<tr><button onclick="setSize(1000 , 'Small')">Small (2)</button></tr></br>
-					<tr><button onclick="setSize(10000 , 'Medium')">Medium (3)</button></tr></br>
-					<tr><button onclick="setSize(100000 , 'Huge')">Huge (4)</button></tr></br>
-					<tr><button onclick="setSize(1000000 , 'Enormous')">Enormous (5)</button></tr>
-					<tr><button onclick="setSize(300000000 * ( 1 + (Math.random()))  , 'Supernova', 0.5, [253, 238, 150])">Supernova</button></tr>
-					<tr><button onclick="setSize(300000000 * ( 1 + (Math.random()))  , 'Neutron Star', 9, 'neutrob')">Neutron Star</button></tr>
-					<tr><button onclick="setSize(1000000000 * ( 1 + (Math.random()))  , 'Black Hole', 10, 'blackhole')">Black Hole</button></tr>
+					<tr><button onclick="getType(); setSize(1 , 'Dust')">Dust (0)</button></tr></br>
+					<tr><button onclick="getType(); setSize(100 , 'Tiny')">Tiny (1)</button></tr></br>
+					<tr><button onclick="getType(); setSize(1000 , 'Small')">Small (2)</button></tr></br>
+					<tr><button onclick="getType(); setSize(10000 , 'Medium')">Medium (3)</button></tr></br>
+					<tr><button onclick="getType(); setSize(100000 , 'Huge')">Huge (4)</button></tr></br>
+					<tr><button onclick="getType(); setSize(1000000 , 'Enormous')">Enormous (5)</button></tr>
+					<tr><button onclick="currentParticleType = 'matter'; setSize(300000000 * ( 1 + (Math.random()))  , 'Supernova', 0.5, [253, 238, 150])">Supernova</button></tr>
+					<tr><button onclick="currentParticleType = 'neutron'; setSize(300000000 * ( 1 + (Math.random()))  , 'Neutron Star', 9, 'neutron');">Neutron Star</button></tr>
+					<tr><button onclick="currentParticleType = 'blackhole'; setSize(1000000000 * ( 1 + (Math.random()))  , 'Black Hole', 10, 'blackhole');">Black Hole</button></tr>
 				</table>
 				<div class="section-title">Particle Types</div>
 				<button onclick="addMoon()">Add Moon (A)</button></br>
@@ -1237,15 +1241,15 @@
 						</tr>
 				</table>
 				<table>
-					<tr><button onclick="setSize(100000000 , 'Sun')">Sun</button></tr> 
-					<tr><button onclick="setSize(16.6 , 'Mercury')">Mercury</button></tr>
-					<tr><button onclick="setSize(245 , 'Venus')">Venus</button></tr>
-					<tr><button onclick="setSize(300 , 'Earth')">Earth</button></tr>
-					<tr><button onclick="setSize(32.3 , 'Mars')">Mars</button></tr>
-					<tr><button onclick="setSize(95400 , 'Jupiter')">Jupiter</button></tr>
-					<tr><button onclick="setSize(28570 , 'Saturn')">Satrun</button></tr>
-					<tr><button onclick="setSize(4360 , 'Uranus')">Uranus</button></tr>
-					<tr><button onclick="setSize(5150 , 'Neptune')">Neptune</button></tr>
+					<tr><button onclick="getType(); setSize(100000000 , 'Sun')">Sun</button></tr> 
+					<tr><button onclick="getType(); setSize(16.6 , 'Mercury')">Mercury</button></tr>
+					<tr><button onclick="getType(); setSize(245 , 'Venus')">Venus</button></tr>
+					<tr><button onclick="getType(); setSize(300 , 'Earth')">Earth</button></tr>
+					<tr><button onclick="getType(); setSize(32.3 , 'Mars')">Mars</button></tr>
+					<tr><button onclick="getType(); setSize(95400 , 'Jupiter')">Jupiter</button></tr>
+					<tr><button onclick="getType(); setSize(28570 , 'Saturn')">Satrun</button></tr>
+					<tr><button onclick="getType(); setSize(4360 , 'Uranus')">Uranus</button></tr>
+					<tr><button onclick="getType(); setSize(5150 , 'Neptune')">Neptune</button></tr>
 
 				</table>
 			</div>
