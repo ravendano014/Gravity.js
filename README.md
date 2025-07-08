@@ -3,6 +3,7 @@ A Javascript clone of nowykurier's Gravity Toy.
 #Improvements
 
 DEMO [https://ravendano014.github.io/Gravity.js/]
+3d [https://ravendano014.github.io/Gravity.js/Keppler.html]
 
 #TODO:
 - [ ] Correct Physics Black Hole & Neutron Stars
