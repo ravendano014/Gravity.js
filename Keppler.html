@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gravity Toy 3D</title>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script> <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            color: #ffffff;
+            font-family: Courier New;
+            font-size: 11px;
+            background-color: black;
+        }
+        
+        button {
+            -webkit-border-radius: 0;
+            -moz-border-radius: 0;
+            border-radius: 0px;
+            font-family: Courier New;
+            color: #ffffff;
+            font-size: 11px;
+            background: #000000;
+            padding: 5px 5px 5px 5px;
+            border: solid #ffffff 1px;
+            text-decoration: none;
+            width: 176px; /* Doubled width from 88px */
+            margin-top: 2px;
+        }
+
+        .txt {
+            -webkit-border-radius: 0;
+            -moz-border-radius: 0;
+            border-radius: 0px;
+            font-family: Courier New;
+            color: #ffffff;
+            font-size: 11px;
+            background: #000000;
+            padding: 5px 5px 5px 5px;
+            border: solid #ffffff 1px;
+            text-decoration: none;
+            margin-left: 5px;
+            width: 50px;
+        }
+
+        button:hover {
+            background: #ffffff;
+            color: #000000;
+            text-decoration: none;
+        }
+        
+        #controlbox {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 5px;
+            border: solid #ffffff 1px;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+        }
+        
+        #homebox {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px;
+            border: solid #ffffff 1px;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            font-size: 20px;
+        }
+        
+        a:link {
+            color: #0080FF;
+            text-decoration: none;
+        }
+        
+        a:visited {
+            color: #0000FF;
+            text-decoration: none;
+        }
+        
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="controlbox">
+        <div>Gravity</div><br>
+        
+        <button onclick="toggleMatterType()">Toggle Matter (U)</button><br>
+        
+        <div id="particleCount">Particles: 0</div><br> <table>
+            <tr>Mass:<input type="text" value="1.0e3" class="txt" id="mass"></tr><br>
+            <tr><button onclick="setSize(100)">Tiny (1)</button></tr><br>
+            <tr><button onclick="setSize(1000)">Small (2)</button></tr><br>
+            <tr><button onclick="setSize(10000)">Medium (3)</button></tr><br>
+            <tr><button onclick="setSize(100000)">Huge (4)</button></tr><br>
+            <tr><button onclick="setSize(1000000)">Enormous (5)</button></tr>
+        </table>
+        <button onclick="startSimulation()">Start</button><br>
+        <button onclick="stopSimulation()">Stop</button><br>
+        <button onclick="generateProto()">Protodisk (D)</button><br>
+        <button onclick="generateRandomSystem()">Random System</button><br>
+        <button onclick="generateAsteroidBelt()">Asteroid Belt (K)</button><br>
+        <button onclick="clearParticles()">Clear</button><br>
+        <button onclick="toggleOrbits()">Toggle Orbits (O)</button><br>
+        <button onclick="addMoon()">Add Moon (A)</button><br> <button onclick="toggleNames()">Toggle Name (N)</button><br> <button onclick="toggleMasses()">Toggle Mass (M)</button><br> </div>
+    
+    <div id="homebox"><a href='/'>Home</a></div>
+    
+    <canvas id="renderCanvas"></canvas>
+    
+    <script>
+        // Variables globales
+        let canvas, engine, scene, camera;
+        let particles = [];
+        let newParticleMass = 1000;
+        let isSimulationRunning = true;
+        let isDragging = false;
+        let startX, startY;
+        let showOrbits = false; // To control orbit visibility
+        let showNames = false; // New: To control name label visibility
+        let showMasses = false; // New: To control mass label visibility
+        const ORBIT_POINTS_LIMIT = 500; // Limit for orbit points
+        const ORBIT_DRAW_INTERVAL = 5; // Draw orbit point every X frames
+        const G_EFFECTIVE = 0.0001; // Gravitational constant adjusted for simulation scale
+        let currentParticleType = 'matter'; // New: Default to matter
+        let particleIdCounter = 0; // New: Counter for unique particle IDs
+        let advancedTexture; // New: For GUI
+
+        // Inicialización de Babylon.js
+        window.addEventListener('DOMContentLoaded', function() {
+            canvas = document.getElementById("renderCanvas");
+            engine = new BABYLON.Engine(canvas, true);
+            scene = new BABYLON.Scene(engine);
+            scene.clearColor = new BABYLON.Color3(0, 0, 0); // Set background color to black
+            
+            // New: Initialize GUI for text labels
+            advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+            // Configurar cámara
+            camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 2, Math.PI / 2, 200, BABYLON.Vector3.Zero(), scene);
+            camera.attachControl(canvas, true);
+            camera.lowerRadiusLimit = 10;
+            camera.upperRadiusLimit = 2000;
+            camera.wheelPrecision = 50;
+            
+            // Configurar luz
+            let light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+            light.intensity = 0.7;
+            
+            // Eventos del ratón
+            canvas.addEventListener("pointerdown", function(evt) {
+                if (evt.button === 0) { // Click izquierdo
+                    if (!isDragging) {
+                        addParticle(evt.clientX, evt.clientY);
+                    }
+                }
+                isDragging = false;
+                startX = evt.clientX;
+                startY = evt.clientY;
+            });
+            
+            canvas.addEventListener("pointermove", function(evt) {
+                if (Math.abs(evt.clientX - startX) > 5 || Math.abs(evt.clientY - startY) > 5) {
+                    isDragging = true;
+                }
+            });
+
+            // Keyboard event for toggling orbits
+            window.addEventListener("keydown", function(evt) {
+                if (evt.key === "o" || evt.key === "O") {
+                    toggleOrbits();
+                } else if (evt.key === "n" || evt.key === "N") { // Toggle Name with 'N'
+                    toggleNames();
+                } else if (evt.key === "m" || evt.key === "M") { // Toggle Mass with 'M'
+                    toggleMasses();
+                } else if (evt.key === "a" || evt.key === "A") { // Add Moon with 'A' (changed from 'L')
+                    addMoon();
+                } else if (evt.key === "u" || evt.key === "U") { // Toggle Matter Type with 'U'
+                    toggleMatterType();
+                } else if (evt.key === "1") { // Tiny (1)
+                    setSize(100);
+                } else if (evt.key === "2") { // Small (2)
+                    setSize(1000);
+                } else if (evt.key === "3") { // Medium (3)
+                    setSize(10000);
+                } else if (evt.key === "4") { // Huge (4)
+                    setSize(100000);
+                } else if (evt.key === "5") { // Enormous (5)
+                    setSize(1000000);
+                } else if (evt.key === "d" || evt.key === "D") { // Protodisk (D)
+                    generateProto();
+                } else if (evt.key === "k" || evt.key === "K") { // Asteroid Belt (K)
+                    generateAsteroidBelt();
+                }
+            });
+            
+            // Iniciar simulación
+            let frameCount = 0; // Frame counter for orbit drawing
+            engine.runRenderLoop(function() {
+                if (isSimulationRunning) {
+                    updateParticles();
+                    frameCount++; // Increment frame counter
+                    if (showOrbits && frameCount % ORBIT_DRAW_INTERVAL === 0) {
+                        updateOrbitMeshes(); // Update orbits less frequently
+                    }
+                    // New: Update labels every frame
+                    updateParticleLabels();
+                }
+                scene.render();
+            });
+            
+            // Manejar redimensionamiento de ventana
+            window.addEventListener("resize", function() {
+                engine.resize();
+            });
+
+            updateParticleCountDisplay(); // Initialize display on load
+        });
+        
+        // New: Toggle particle type between matter and antimatter
+        function toggleMatterType() {
+            currentParticleType = (currentParticleType === 'matter') ? 'antimatter' : 'matter';
+            console.log(`Particle type toggled to: ${currentParticleType}`);
+        }
+
+        // Function to get color based on mass and type
+        function getColorByMass(mass, type) {
+            let color;
+            if (type === 'antimatter') {
+                if (mass < 500) color = new BABYLON.Color3(0.5, 0.5, 1);    // Light Blue
+                else if (mass < 5000) color = new BABYLON.Color3(0.3, 0.3, 1); // Medium Blue
+                else if (mass < 50000) color = new BABYLON.Color3(0.1, 0.1, 1); // Dark Blue
+                else color = new BABYLON.Color3(0, 0, 0.8);                  // Very Dark Blue
+            } else { // Matter
+                if (mass < 500) color = new BABYLON.Color3(1, 1, 1);     // White
+                else if (mass < 5000) color = new BABYLON.Color3(1, 1, 0);    // Yellow
+                else if (mass < 50000) color = new BABYLON.Color3(1, 0.5, 0); // Orange
+                else color = new BABYLON.Color3(1, 0, 0);                    // Red
+            }
+            return color;
+        }
+
+        // Functions de simulación
+        function updateParticles() {
+            let particlesToRemove = new Set();
+            
+            // Apply gravity between all particles
+            for (let i = 0; i < particles.length; i++) {
+                if (particlesToRemove.has(i)) continue; // Skip if already marked for removal
+
+                let p1 = particles[i];
+                let totalForce = new BABYLON.Vector3(0, 0, 0);
+                
+                for (let j = 0; j < particles.length; j++) {
+                    if (i === j || particlesToRemove.has(j)) continue; // Skip self or already marked for removal
+
+                    let p2 = particles[j];
+
+                    let direction = p2.position.subtract(p1.position);
+                    let distanceSquared = direction.lengthSquared();
+                    let distance = Math.sqrt(distanceSquared);
+                    
+                    // Collision detection based on current mesh scaling (radius = diameter / 2)
+                    let radius1 = p1.mesh.scaling.x / 2;
+                    let radius2 = p2.mesh.scaling.x / 2;
+                    let collisionThreshold = radius1 + radius2;
+
+                    if (distance < collisionThreshold && distance > 0.01) { // Collision detected
+                        console.log(`Collision detected between ${p1.name} (${p1.type}, ${p1.mass.toFixed(0)}) and ${p2.name} (${p2.type}, ${p2.mass.toFixed(0)})`);
+                        
+                        if (p1.type !== p2.type) { // Matter-Antimatter collision
+                            let remainingMass = Math.abs(p1.mass - p2.mass);
+                            
+                            if (remainingMass > 0) {
+                                // The more massive particle survives with reduced mass
+                                let survivor = p1.mass > p2.mass ? p1 : p2;
+                                let absorbed = p1.mass > p2.mass ? p2 : p1;
+
+                                // Update survivor's properties
+                                survivor.mass = remainingMass;
+                                survivor.mesh.material.emissiveColor = getColorByMass(survivor.mass, survivor.type);
+                                particlesToRemove.add(particles.indexOf(absorbed));
+                                console.log(`Matter-Antimatter: ${absorbed.name} annihilated. ${survivor.name} (${survivor.type}) with ${survivor.mass.toFixed(0)} remains.`);
+
+                            } else { // Masses are equal, both annihilated
+                                particlesToRemove.add(i);
+                                particlesToRemove.add(j);
+                                console.log(`Matter-Antimatter: Both ${p1.name} and ${p2.name} of mass ${p1.mass.toFixed(0)} annihilated.`);
+                            }
+                        } else { // Matter-Matter or Antimatter-Antimatter collision (merge)
+                            let mergedMass = p1.mass + p2.mass;
+                            
+                            // Conserve momentum (simplified: assume p1 absorbs p2)
+                            let mergedVelocity = p1.velocity.scale(p1.mass).add(p2.velocity.scale(p2.mass)).scale(1 / mergedMass);
+
+                            p1.mass = mergedMass;
+                            p1.velocity = mergedVelocity;
+                            p1.mesh.material.emissiveColor = getColorByMass(p1.mass, p1.type);
+                            particlesToRemove.add(j); // Mark the second particle for removal
+                            console.log(`${p1.type}-${p1.type}: ${p1.name} merged with ${p2.name}. New mass: ${p1.mass.toFixed(0)}`);
+                        }
+                    }
+                    
+                    // Apply gravitational force
+                    if (distanceSquared > 0.1) { // Avoid division by zero for gravity calculation
+                        let forceMagnitude = (p1.mass * p2.mass) / distanceSquared;
+                        direction.normalize();
+                        totalForce.addInPlace(direction.scale(forceMagnitude * G_EFFECTIVE));
+                    }
+                }
+                
+                // Update velocity (F = ma => a = F/m)
+                if (p1.mass > 0) { // Only update if particle still has mass
+                    p1.velocity.addInPlace(totalForce.scale(1 / p1.mass));
+                }
+            }
+
+            // Remove particles marked for removal
+            let finalParticles = [];
+            for (let i = 0; i < particles.length; i++) {
+                if (!particlesToRemove.has(i)) {
+                    finalParticles.push(particles[i]);
+                } else {
+                    console.log(`Disposing of particle: ${particles[i].name}`);
+                    particles[i].mesh.dispose();
+                    if (particles[i].orbitMesh) {
+                        particles[i].orbitMesh.dispose();
+                    }
+                    // New: Dispose of text labels
+                    if (particles[i].nameText) {
+                        particles[i].nameText.dispose();
+                    }
+                    if (particles[i].massText) {
+                        particles[i].massText.dispose();
+                    }
+                }
+            }
+            particles = finalParticles; // Replace with updated list
+
+            // Update positions of remaining particles
+            for (let particle of particles) {
+                if (particle.mass <= 0) { // Ensure no zero or negative mass particles remain
+                    particlesToRemove.add(particles.indexOf(particle)); // Mark for removal if somehow mass became zero
+                    continue; 
+                }
+                particle.position.addInPlace(particle.velocity);
+                particle.mesh.position.copyFrom(particle.position);
+                
+                // Update size based on the mass (logarithmic for better visualization)
+                let scale = Math.log10(particle.mass + 1) / 2; // Increased scale factor (was /4)
+                if (scale < 0.2) scale = 0.2; // Increased minimum size (was 0.1)
+                particle.mesh.scaling.set(scale, scale, scale);
+
+                // Add current position to orbit points
+                particle.orbitPoints.push(particle.position.clone());
+                if (particle.orbitPoints.length > ORBIT_POINTS_LIMIT) {
+                    particle.orbitPoints.shift(); // Remove the oldest point
+                }
+            }
+            updateParticleCountDisplay(); // Update counter after any changes
+        }
+
+        // Function to update orbit meshes
+        function updateOrbitMeshes() {
+            for (let particle of particles) {
+                if (showOrbits) {
+                    if (particle.orbitMesh) {
+                        // Update existing line mesh if it has enough points
+                        if (particle.orbitPoints.length > 1) {
+                            BABYLON.MeshBuilder.CreateLines("orbitLines", {points: particle.orbitPoints, instance: particle.orbitMesh}, scene);
+                        }
+                    } else {
+                        // Create new line mesh if it doesn't exist and has enough points
+                        if (particle.orbitPoints.length > 1) {
+                            particle.orbitMesh = BABYLON.MeshBuilder.CreateLines("orbitLines", {points: particle.orbitPoints, updatable: true}, scene);
+                            particle.orbitMesh.color = particle.mesh.material.emissiveColor; // Match orbit color to particle color
+                        }
+                    }
+                } else {
+                    // If orbits are not shown, dispose of the mesh
+                    if (particle.orbitMesh) {
+                        particle.orbitMesh.dispose();
+                        particle.orbitMesh = null;
+                    }
+                }
+            }
+        }
+
+        // New: Function to update particle labels (name and mass)
+        function updateParticleLabels() {
+            for (let particle of particles) {
+                if (!particle.nameText) {
+                    // Create name text block if it doesn't exist
+                    particle.nameText = new BABYLON.GUI.TextBlock();
+                    particle.nameText.color = "white";
+                    particle.nameText.fontSize = 10;
+                    advancedTexture.addControl(particle.nameText);
+                    particle.nameText.linkWithMesh(particle.mesh);
+                    particle.nameText.linkOffsetY = -30; // Offset above the particle
+                }
+
+                if (!particle.massText) {
+                    // Create mass text block if it doesn't exist
+                    particle.massText = new BABYLON.GUI.TextBlock();
+                    particle.massText.color = "lightgray";
+                    particle.massText.fontSize = 9;
+                    advancedTexture.addControl(particle.massText);
+                    particle.massText.linkWithMesh(particle.mesh);
+                    particle.massText.linkOffsetY = -15; // Offset above the particle, below name
+                }
+
+                // Update visibility based on global flags
+                particle.nameText.isVisible = showNames;
+                particle.massText.isVisible = showMasses;
+
+                // Update text content
+                if (showNames) {
+                    particle.nameText.text = particle.name;
+                }
+                if (showMasses) {
+                    particle.massText.text = `Mass: ${particle.mass.toExponential(1).replace("+", "")}`;
+                }
+            }
+        }
+        
+        function addParticle(screenX, screenY) {
+            // Convertir coordenadas de pantalla a posición 3D
+            let pickInfo = scene.pick(screenX, screenY);
+            let position;
+            
+            if (pickInfo.hit) {
+                position = pickInfo.pickedPoint;
+            } else {
+                // Si no se hizo click en un objeto, crear en un plano imaginario
+                let ray = scene.createPickingRay(screenX, screenY, BABYLON.Matrix.Identity(), camera);
+                // Calcular posición a una distancia fija
+                position = ray.origin.add(ray.direction.scale(10));
+            }
+            
+            let particleName = `ClickParticle-${particleIdCounter++}`; // Assign unique name
+            let sphere = BABYLON.MeshBuilder.CreateSphere(particleName, {diameter: 1}, scene);
+            sphere.position = position;
+            
+            // Create a new material for each particle to set individual colors
+            let particleMaterial = new BABYLON.StandardMaterial("particleMat" + particles.length, scene);
+            particleMaterial.emissiveColor = getColorByMass(newParticleMass, currentParticleType); // Pass type
+            sphere.material = particleMaterial;
+            
+            let particle = {
+                name: particleName, // Add name property
+                mesh: sphere,
+                position: position.clone(),
+                velocity: new BABYLON.Vector3(0, 0, 0),
+                mass: newParticleMass,
+                orbitPoints: [position.clone()], // Start with initial position
+                orbitMesh: null,  // Mesh for the orbit line
+                type: currentParticleType, // New: particle type
+                nameText: null, // New: TextBlock for name
+                massText: null  // New: TextBlock for mass
+            };
+            
+            particles.push(particle);
+            console.log(`Added particle ${particle.name} (${particle.type}) with mass ${newParticleMass.toFixed(0)}`);
+            updateParticleCountDisplay(); // Update counter
+        }
+        
+        function generateProto() {
+            clearParticles();
+            
+            // Añadir una partícula central masiva (always matter)
+            let centralMass = 100000;
+            let centralParticleName = `CentralStar-${particleIdCounter++}`;
+            let centralSphere = BABYLON.MeshBuilder.CreateSphere(centralParticleName, {diameter: 1}, scene);
+            centralSphere.position = BABYLON.Vector3.Zero();
+            
+            let centralMaterial = new BABYLON.StandardMaterial("centralMat", scene);
+            centralMaterial.emissiveColor = getColorByMass(centralMass, 'matter'); // Central body is always matter
+            centralSphere.material = centralMaterial;
+            
+            let centralParticle = {
+                name: centralParticleName, // Add name property
+                mesh: centralSphere,
+                position: BABYLON.Vector3.Zero(),
+                velocity: new BABYLON.Vector3(0, 0, 0),
+                mass: centralMass,
+                orbitPoints: [BABYLON.Vector3.Zero()],
+                orbitMesh: null,
+                type: 'matter', // Central body is always matter
+                nameText: null, // New: TextBlock for name
+                massText: null  // New: TextBlock for mass
+            };
+            particles.push(centralParticle);
+            console.log(`Generated central particle ${centralParticle.name}.`);
+
+            // Crear un disco protoplanetario de partículas
+            const numProtoParticles = 350; 
+            for (let i = 0; i < numProtoParticles; i++) {
+                let randRadius = 30 + (Math.random() * 40); // Increased radius between 30 and 70
+                let randAngle = Math.random() * 2 * Math.PI;
+                let x = randRadius * Math.cos(randAngle);
+                let y = randRadius * Math.sin(randAngle);
+                let z = (Math.random() - 0.5) * 1; // Slight vertical spread
+
+                let initialPosition = new BABYLON.Vector3(x, z, y);
+                
+                let mass = 1000; // Default mass for protoplanet particles
+                
+                // Calculate tangential velocity for orbit around the central particle
+                let distance = initialPosition.subtract(centralParticle.position).length();
+                let orbitalSpeed = Math.sqrt(G_EFFECTIVE * centralParticle.mass / distance);
+                
+                let directionFromCenter = initialPosition.subtract(centralParticle.position).normalize();
+                
+                // Define a general normal for the disk plane (mostly Y, with slight randomness)
+                let orbitNormal = new BABYLON.Vector3(
+                    (Math.random() - 0.5) * 0.1, // Small random variation for X
+                    1,                           // Predominantly Y-axis
+                    (Math.random() - 0.5) * 0.1  // Small random variation for Z
+                ).normalize();
+
+                // Calculate tangential direction using cross product (perpendicular to radius and orbit normal)
+                let tangentialDirection = BABYLON.Vector3.Cross(directionFromCenter, orbitNormal).normalize();
+
+                // Randomly choose clockwise or counter-clockwise
+                let orbitalDirectionMultiplier = Math.random() < 0.5 ? 1 : -1;
+                tangentialDirection.scaleInPlace(orbitalDirectionMultiplier);
+
+                let velocity = centralParticle.velocity.add(tangentialDirection.scale(orbitalSpeed));
+
+                let protoParticleName = `ProtoParticle-${particleIdCounter++}`;
+                let sphere = BABYLON.MeshBuilder.CreateSphere(protoParticleName, {diameter: 1}, scene);
+                sphere.position = initialPosition;
+                
+                let particleMaterial = new BABYLON.StandardMaterial("protoParticleMat" + i, scene);
+                particleMaterial.emissiveColor = getColorByMass(mass, currentParticleType); // Use current type for planets
+                sphere.material = particleMaterial;
+
+                particles.push({
+                    name: protoParticleName, // Add name property
+                    mesh: sphere,
+                    position: initialPosition.clone(),
+                    velocity: velocity,
+                    mass: mass,
+                    orbitPoints: [initialPosition.clone()],
+                    orbitMesh: null,
+                    type: currentParticleType, // Assign current type
+                    nameText: null, // New: TextBlock for name
+                    massText: null  // New: TextBlock for mass
+                });
+            }
+            console.log(`Generated Protodisk with ${particles.length} particles. Matter Type: ${currentParticleType}`);
+            updateParticleCountDisplay(); // Update counter
+        }
+
+        // Function to generate a random system of particles
+        function generateRandomSystem() {
+            clearParticles();
+            const numParticles = 25 + Math.floor(Math.random() * 10); // At least 25, up to 34
+            const spawnRadius = 20; // Max distance from origin for initial placement
+            const maxInitialVelocity = 0.5; // Max initial velocity magnitude
+
+            for (let i = 0; i < numParticles; i++) {
+                // Random position
+                let position = new BABYLON.Vector3(
+                    (Math.random() - 0.5) * spawnRadius * 2,
+                    (Math.random() - 0.5) * spawnRadius * 2,
+                    (Math.random() - 0.5) * spawnRadius * 2
+                );
+
+                // Random mass (e.g., between 100 and 100,000)
+                let mass = 100 + Math.random() * 99900; 
+
+                // Random initial velocity
+                let velocity = new BABYLON.Vector3(
+                    (Math.random() - 0.5) * maxInitialVelocity * 2,
+                    (Math.random() - 0.5) * maxInitialVelocity * 2,
+                    (Math.random() - 0.5) * maxInitialVelocity * 2
+                );
+
+                let randomParticleName = `RandomParticle-${particleIdCounter++}`;
+                let sphere = BABYLON.MeshBuilder.CreateSphere(randomParticleName, {diameter: 1}, scene);
+                sphere.position = position;
+                
+                let particleMaterial = new BABYLON.StandardMaterial("randomMat" + i, scene);
+                particleMaterial.emissiveColor = getColorByMass(mass, currentParticleType); // Use current type
+                sphere.material = particleMaterial;
+                
+                particles.push({
+                    name: randomParticleName, // Add name property
+                    mesh: sphere,
+                    position: position.clone(),
+                    velocity: velocity,
+                    mass: mass,
+                    orbitPoints: [position.clone()],
+                    orbitMesh: null,
+                    type: currentParticleType, // Assign current type
+                    nameText: null, // New: TextBlock for name
+                    massText: null  // New: TextBlock for mass
+                });
+            }
+            console.log(`Generated Random System with ${particles.length} particles. Matter Type: ${currentParticleType}`);
+            updateParticleCountDisplay(); // Update counter
+        }
+        
+        // Function to generate an asteroid belt
+        function generateAsteroidBelt() {
+            clearParticles();
+
+            // Create a central, massive body (always matter for belt)
+            let centralMass = 150000;
+            let centralAsteroidBodyName = `CentralMass-${particleIdCounter++}`;
+            let centralSphere = BABYLON.MeshBuilder.CreateSphere(centralAsteroidBodyName, {diameter: 1}, scene);
+            centralSphere.position = BABYLON.Vector3.Zero();
+            let centralMaterial = new BABYLON.StandardMaterial("centralAsteroidMat", scene);
+            centralMaterial.emissiveColor = getColorByMass(centralMass, 'matter'); // Central body is always matter
+            centralSphere.material = centralMaterial;
+            let centralParticle = {
+                name: centralAsteroidBodyName, // Add name property
+                mesh: centralSphere,
+                position: BABYLON.Vector3.Zero(),
+                velocity: new BABYLON.Vector3(0, 0, 0),
+                mass: centralMass,
+                orbitPoints: [BABYLON.Vector3.Zero()],
+                orbitMesh: null,
+                type: 'matter', // Central body is always matter
+                nameText: null, // New: TextBlock for name
+                massText: null  // New: TextBlock for mass
+            };
+            particles.push(centralParticle);
+            console.log(`Generated central asteroid body ${centralParticle.name}.`);
+
+            const numAsteroids = 500; 
+            const innerRadius = 50; // Increased inner radius significantly
+            const outerRadius = 90; // Increased outer radius significantly
+            const beltThickness = 5; // Vertical thickness of the belt
+
+            for (let i = 0; i < numAsteroids; i++) {
+                let randomRadius = innerRadius + (Math.random() * (outerRadius - innerRadius));
+                let randomAngle = Math.random() * 2 * Math.PI;
+                let randomHeight = (Math.random() - 0.5) * beltThickness; // Spread vertically
+
+                let position = new BABYLON.Vector3(
+                    randomRadius * Math.cos(randomAngle),
+                    randomHeight,
+                    randomRadius * Math.sin(randomAngle)
+                );
+
+                let mass = 50 + Math.random() * 950; // Different masses for asteroids (50 to 1000)
+
+                // Calculate tangential velocity for a stable orbit around the central body
+                let distance = position.subtract(centralParticle.position).length();
+                let orbitalSpeed = Math.sqrt(G_EFFECTIVE * centralParticle.mass / distance);
+
+                // Direction vector from center to asteroid
+                let directionFromCenter = position.subtract(centralParticle.position).normalize();
+                
+                // Introduce randomness for orbital plane/axis (similar to addMoon)
+                let orbitNormal = new BABYLON.Vector3(
+                    Math.random() * 0.5 - 0.25, // Small random variation for X
+                    1 + (Math.random() * 0.5 - 0.25), // Predominantly Y, with small random variation
+                    Math.random() * 0.5 - 0.25  // Small random variation for Z
+                ).normalize();
+                // Ensure orbitNormal is not too close to directionFromCenter for cross product stability
+                if (BABYLON.Vector3.Dot(directionFromCenter, orbitNormal) > 0.95) { // If nearly parallel
+                    orbitNormal = new BABYLON.Vector3(1, 0, 0).normalize(); // Default to X axis for a different cross product
+                }
+
+                let tangentialDirection = BABYLON.Vector3.Cross(directionFromCenter, orbitNormal).normalize();
+
+                // Randomly choose clockwise or counter-clockwise
+                let orbitalDirectionMultiplier = Math.random() < 0.5 ? 1 : -1;
+                tangentialDirection.scaleInPlace(orbitalDirectionMultiplier);
+
+                let velocity = centralParticle.velocity.add(tangentialDirection.scale(orbitalSpeed));
+
+                let asteroidName = `Asteroid-${particleIdCounter++}`;
+                let sphere = BABYLON.MeshBuilder.CreateSphere(asteroidName, {diameter: 1}, scene);
+                sphere.position = position;
+                
+                let particleMaterial = new BABYLON.StandardMaterial("asteroidMat" + i, scene);
+                particleMaterial.emissiveColor = getColorByMass(mass, currentParticleType); // Use current type
+                sphere.material = particleMaterial;
+
+                particles.push({
+                    name: asteroidName, // Add name property
+                    mesh: sphere,
+                    position: position.clone(),
+                    velocity: velocity,
+                    mass: mass,
+                    orbitPoints: [position.clone()],
+                    orbitMesh: null,
+                    type: currentParticleType, // Assign current type
+                    nameText: null, // New: TextBlock for name
+                    massText: null  // New: TextBlock for mass
+                });
+            }
+            console.log(`Generated Asteroid Belt with ${particles.length} particles. Matter Type: ${currentParticleType}`);
+            updateParticleCountDisplay(); // Update counter
+        }
+
+        function setSize(size) {
+            newParticleMass = size;
+            document.getElementById("mass").value = size.toExponential(1).replace("+", "");
+        }
+        
+        function clearParticles() {
+            for (let particle of particles) {
+                console.log(`Clearing particle: ${particle.name}`); // Log cleared particle name
+                particle.mesh.dispose();
+                if (particle.orbitMesh) { // Dispose orbit mesh
+                    particle.orbitMesh.dispose();
+                }
+                // New: Dispose of text labels
+                if (particle.nameText) {
+                    particle.nameText.dispose();
+                }
+                if (particle.massText) {
+                    particle.massText.dispose();
+                }
+            }
+            particles = [];
+            particleIdCounter = 0; // Reset counter when clearing all particles
+            console.log("All particles cleared.");
+            updateParticleCountDisplay(); // Update counter
+        }
+        
+        function startSimulation() {
+            isSimulationRunning = true;
+            console.log("Simulation started.");
+        }
+        
+        function stopSimulation() {
+            isSimulationRunning = false;
+            console.log("Simulation stopped.");
+        }
+
+        // Function to toggle orbit visibility
+        function toggleOrbits() {
+            showOrbits = !showOrbits;
+            if (!showOrbits) {
+                // If orbits are turned off, dispose all orbit meshes and clear points
+                for (let particle of particles) {
+                    if (particle.orbitMesh) {
+                        particle.orbitMesh.dispose();
+                        particle.orbitMesh = null;
+                    }
+                    particle.orbitPoints = [particle.position.clone()]; // Reset points with current position
+                }
+                console.log("Orbits hidden.");
+            } else {
+                // If orbits are turned on, ensure they are created/updated
+                updateOrbitMeshes(); 
+                console.log("Orbits shown.");
+            }
+        }
+
+        // New: Function to toggle name visibility
+        function toggleNames() {
+            showNames = !showNames;
+            updateParticleLabels(); // Update visibility for all particles immediately
+            console.log("Toggle Name: " + (showNames ? "ON" : "OFF"));
+        }
+
+        // New: Function to toggle mass visibility
+        function toggleMasses() {
+            showMasses = !showMasses;
+            updateParticleLabels(); // Update visibility for all particles immediately
+            console.log("Toggle Mass: " + (showMasses ? "ON" : "OFF"));
+        }
+
+        // Function to add a moon to the most massive particle
+        function addMoon() {
+            if (particles.length === 0) {
+                console.warn("Cannot add a moon: no particles exist to orbit around.");
+                return;
+            }
+
+            // Find the most massive particle to orbit around
+            let parentParticle = particles[0];
+            for (let i = 1; i < particles.length; i++) {
+                if (particles[i].mass > parentParticle.mass) {
+                    parentParticle = particles[i];
+                }
+            }
+
+            // Random Moon Mass (e.g., between 50 and 500)
+            const moonMass = 50 + Math.random() * 450; 
+            // Random Orbit Distance (e.g., between 3 and 8)
+            const orbitDistance = 3 + Math.random() * 5; 
+            
+            // Generate a random initial position around the parent
+            let randomDirection = new BABYLON.Vector3(
+                Math.random() * 2 - 1, // -1 to 1
+                Math.random() * 2 - 1,
+                Math.random() * 2 - 1
+            ).normalize(); // Normalize to get a unit vector
+
+            let moonPosition = parentParticle.position.add(randomDirection.scale(orbitDistance));
+
+            // Calculate tangential velocity for a circular orbit
+            let requiredSpeed = Math.sqrt(G_EFFECTIVE * parentParticle.mass / orbitDistance);
+
+            // Direction vector from parent to moon
+            let directionToMoon = moonPosition.subtract(parentParticle.position).normalize();
+            
+            // Generate a random normal vector for the orbital plane
+            let orbitNormal = new BABYLON.Vector3(
+                Math.random() * 2 - 1,
+                Math.random() * 2 - 1,
+                Math.random() * 2 - 1
+            ).normalize();
+
+            // Calculate tangential direction using cross product (perpendicular to position and orbit normal)
+            let tangentialDirection = BABYLON.Vector3.Cross(directionToMoon, orbitNormal).normalize();
+
+            // Randomly choose clockwise or counter-clockwise
+            let orbitalDirectionMultiplier = Math.random() < 0.5 ? 1 : -1;
+            tangentialDirection.scaleInPlace(orbitalDirectionMultiplier);
+
+            // Adjust for existing parent velocity to ensure relative orbit
+            let moonVelocity = parentParticle.velocity.add(tangentialDirection.scale(requiredSpeed));
+
+            let moonName = `Moon-${particleIdCounter++}`;
+            // Create the moon particle
+            let sphere = BABYLON.MeshBuilder.CreateSphere(moonName, {diameter: 1}, scene);
+            sphere.position = moonPosition;
+            
+            let moonMaterial = new BABYLON.StandardMaterial("moonMat" + particles.length, scene);
+            moonMaterial.emissiveColor = getColorByMass(moonMass, currentParticleType); // Use current type
+            sphere.material = moonMaterial;
+            
+            let moonParticle = {
+                name: moonName, // Add name property
+                mesh: sphere,
+                position: moonPosition.clone(),
+                velocity: moonVelocity,
+                mass: moonMass,
+                orbitPoints: [moonPosition.clone()],
+                orbitMesh: null,
+                type: currentParticleType, // Assign current type
+                nameText: null, // New: TextBlock for name
+                massText: null  // New: TextBlock for mass
+            };
+            
+            particles.push(moonParticle);
+            console.log(`Added a ${moonParticle.name} (${moonParticle.type}) with mass ${moonMass.toFixed(0)} orbiting ${parentParticle.name}.`);
+            updateParticleCountDisplay(); // Update counter
+        }
+
+        // Function to update the particle count display
+        function updateParticleCountDisplay() {
+            document.getElementById("particleCount").innerText = "Particles: " + particles.length;
+        }
+    </script>
+</body>
+</html>
