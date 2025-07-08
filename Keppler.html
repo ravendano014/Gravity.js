@@ -100,18 +100,36 @@
             <tr><button onclick="setSize(1000)">Small (2)</button></tr><br>
             <tr><button onclick="setSize(10000)">Medium (3)</button></tr><br>
             <tr><button onclick="setSize(100000)">Huge (4)</button></tr><br>
-            <tr><button onclick="setSize(1000000)">Enormous (5)</button></tr>
+            <tr><button onclick="setSize(1000000)">Enormous (5)</button></tr><br>
+            <tr><button onclick="currentParticleType = 'supernova'; setSize(300000000 * ( 1 + (Math.random())) , 'Supernova', 0.5, [253, 238, 150])">Supernova</button></tr><br>
+            <tr><button onclick="currentParticleType = 'neutron'; setSize(300000000 * ( 1 + (Math.random())) , 'Neutron Star', 9, 'neutron');">Neutron Star</button></tr><br>
+            <tr><button onclick="currentParticleType = 'blackhole'; setSize(1000000000 * ( 1 + (Math.random())) , 'Black Hole', 10, 'blackhole');">Black Hole</button></tr><br>
         </table>
-        <button onclick="startSimulation()">Start</button><br>
-        <button onclick="stopSimulation()">Stop</button><br>
+        
+        <button onclick="startSimulation()">Start (S)</button><br>
+        <button onclick="stopSimulation()">Stop (s)</button><br>
         <button onclick="generateProto()">Protodisk (D)</button><br>
-        <button onclick="generateRandomSystem()">Random System</button><br>
+        <button onclick="generateRandomSystem()">Random System (R)</button><br>
         <button onclick="generateAsteroidBelt()">Asteroid Belt (K)</button><br>
-        <button onclick="clearParticles()">Clear</button><br>
+        <button onclick="generateSolarSystem()">Solar System (Y)</button><br> <button onclick="clearParticles()">Clear (C)</button><br>
         <button onclick="toggleOrbits()">Toggle Orbits (O)</button><br>
-        <button onclick="addMoon()">Add Moon (A)</button><br> <button onclick="toggleNames()">Toggle Name (N)</button><br> <button onclick="toggleMasses()">Toggle Mass (M)</button><br> </div>
+        <button onclick="addMoon()">Add Moon (A)</button><br>
+        <button onclick="toggleNames()">Toggle Name (N)</button><br>
+        <button onclick="toggleMasses()">Toggle Mass (M)</button><br>
+        <table>
+            <tr><button onclick="setSize(100000000 , 'Sun')">Sun</button></tr> <br>
+            <tr><button onclick="setSize(16.6 , 'Mercury')">Mercury</button></tr><br>
+            <tr><button onclick="setSize(245 , 'Venus')">Venus</button></tr><br>
+            <tr><button onclick="setSize(300 , 'Earth')">Earth</button></tr><br>
+            <tr><button onclick="setSize(32.3 , 'Mars')">Mars</button></tr><br>
+            <tr><button onclick="setSize(95400 , 'Jupiter')">Jupiter</button></tr><br>
+            <tr><button onclick="setSize(28570 , 'Saturn')">Saturn</button></tr><br>
+            <tr><button onclick="setSize(4360 , 'Uranus')">Uranus</button></tr><br>
+            <tr><button onclick="setSize(5150 , 'Neptune')">Neptune</button></tr><br>
+        </table>
+    </div>
     
-    <div id="homebox"><a href='/'>Home</a></div>
+    <div id="homebox">Gravity Toy 3D</div>
     
     <canvas id="renderCanvas"></canvas>
     
@@ -120,6 +138,7 @@
         let canvas, engine, scene, camera;
         let particles = [];
         let newParticleMass = 1000;
+        let currentParticleDisplayName = 'ClickParticle'; // New: Stores the base name for new particles
         let isSimulationRunning = true;
         let isDragging = false;
         let startX, startY;
@@ -129,9 +148,39 @@
         const ORBIT_POINTS_LIMIT = 500; // Limit for orbit points
         const ORBIT_DRAW_INTERVAL = 5; // Draw orbit point every X frames
         const G_EFFECTIVE = 0.0001; // Gravitational constant adjusted for simulation scale
-        let currentParticleType = 'matter'; // New: Default to matter
+        let currentParticleType = 'matter'; // Default to matter
         let particleIdCounter = 0; // New: Counter for unique particle IDs
         let advancedTexture; // New: For GUI
+
+        // New globals for particle properties
+        let newParticleDiameter = 1; // Default diameter
+        let newParticleColorOverride = null; // Can be an RGB array or a string like 'neutron', 'blackhole'
+
+        // New function to get a random color
+        function getRandomColor() {
+            const colors = [
+                new BABYLON.Color3(0, 0, 1),      // Blue
+                new BABYLON.Color3(0.5, 0, 1),    // Violet
+                new BABYLON.Color3(0, 1, 0),      // Green
+                new BABYLON.Color3(0.6, 0.4, 0.2),// Brown
+                new BABYLON.Color3(0.7, 0.7, 0.7),// Gray
+                new BABYLON.Color3(1, 0.7, 0.8),  // Pink
+                new BABYLON.Color3(1, 1, 0),      // Yellow
+                new BABYLON.Color3(1, 0.5, 0)     // Orange
+            ];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // New helper function for special particle colors (Neutron Star, Black Hole)
+        function getSpecialColorForType(typeString) {
+            switch (typeString) {
+                case 'neutron': return new BABYLON.Color3(0.7, 0.7, 1); // Bluish-white for neutron star
+                case 'blackhole': return new BABYLON.Color3(0.05, 0.05, 0.05); // Very dark gray for black hole
+                case 'supernova': return new BABYLON.Color3(253 / 255, 238 / 255, 150 / 255); // Pale yellow from user input
+                default: return new BABYLON.Color3(1, 1, 1); // Default white if unknown
+            }
+        }
+
 
         // Inicialización de Babylon.js
         window.addEventListener('DOMContentLoaded', function() {
@@ -174,30 +223,56 @@
 
             // Keyboard event for toggling orbits
             window.addEventListener("keydown", function(evt) {
-                if (evt.key === "o" || evt.key === "O") {
+                if (evt.key === "o" || evt.key === "O") { // Changed back to 'o' for Toggle Orbits
                     toggleOrbits();
-                } else if (evt.key === "n" || evt.key === "N") { // Toggle Name with 'N'
+                }
+                else if (evt.key === "n" || evt.key === "N") { // Toggle Name with 'N'
                     toggleNames();
-                } else if (evt.key === "m" || evt.key === "M") { // Toggle Mass with 'M'
+                }
+                else if (evt.key === "m" || evt.key === "M") { // Toggle Mass with 'M'
                     toggleMasses();
-                } else if (evt.key === "a" || evt.key === "A") { // Add Moon with 'A' (changed from 'L')
+                }
+                else if (evt.key === "a" || evt.key === "A") { // Add Moon with 'A'
                     addMoon();
-                } else if (evt.key === "u" || evt.key === "U") { // Toggle Matter Type with 'U'
+                }
+                else if (evt.key === "u" || evt.key === "U") { // Toggle Matter Type with 'U'
                     toggleMatterType();
-                } else if (evt.key === "1") { // Tiny (1)
+                }
+                else if (evt.key === "y" || evt.key === "Y") { // Solar System with 'Y'
+                    generateSolarSystem();
+                }
+                else if (evt.key === "1") { // Tiny (1)
                     setSize(100);
-                } else if (evt.key === "2") { // Small (2)
+                }
+                else if (evt.key === "2") { // Small (2)
                     setSize(1000);
-                } else if (evt.key === "3") { // Medium (3)
+                }
+                else if (evt.key === "3") { // Medium (3)
                     setSize(10000);
-                } else if (evt.key === "4") { // Huge (4)
+                }
+                else if (evt.key === "4") { // Huge (4)
                     setSize(100000);
-                } else if (evt.key === "5") { // Enormous (5)
+                }
+                else if (evt.key === "5") { // Enormous (5)
                     setSize(1000000);
-                } else if (evt.key === "d" || evt.key === "D") { // Protodisk (D)
+                }
+                else if (evt.key === "d" || evt.key === "D") { // Protodisk (D)
                     generateProto();
-                } else if (evt.key === "k" || evt.key === "K") { // Asteroid Belt (K)
+                }
+                else if (evt.key === "k" || evt.key === "K") { // Asteroid Belt (K)
                     generateAsteroidBelt();
+                }
+                else if (evt.key === "S") { // Start (S) - Capital S for Start
+                    startSimulation();
+                }
+                else if (evt.key === "s") { // Stop (s) - Lowercase s for Stop
+                    stopSimulation();
+                }
+                else if (evt.key === "c" || evt.key === "C") { // Clear (C)
+                    clearParticles();
+                }
+                else if (evt.key === "r" || evt.key === "R") { // Random System (R)
+                    generateRandomSystem();
                 }
             });
             
@@ -230,7 +305,7 @@
             console.log(`Particle type toggled to: ${currentParticleType}`);
         }
 
-        // Function to get color based on mass and type
+        // Function to get color based on mass and type (still used for non-random system particles)
         function getColorByMass(mass, type) {
             let color;
             if (type === 'antimatter') {
@@ -275,7 +350,28 @@
                     if (distance < collisionThreshold && distance > 0.01) { // Collision detected
                         console.log(`Collision detected between ${p1.name} (${p1.type}, ${p1.mass.toFixed(0)}) and ${p2.name} (${p2.type}, ${p2.mass.toFixed(0)})`);
                         
-                        if (p1.type !== p2.type) { // Matter-Antimatter collision
+                        // Handle specific types (Supernova, Neutron Star, Black Hole) first
+                        if (p1.type === 'supernova' || p2.type === 'supernova') {
+                            // Supernovas could explode, scattering particles, or simply merge.
+                            // For simplicity, let's have them merge and create a powerful burst effect
+                            // (represented by increased size and a short duration intense light, then collapse)
+                            // This would be complex to fully simulate. For now, they'll act as regular matter.
+                             console.log("Supernova collision - currently acts as regular matter merge.");
+                        } else if (p1.type === 'neutron' || p2.type === 'neutron') {
+                            // Neutron stars could merge into a larger neutron star or a black hole.
+                             console.log("Neutron Star collision - currently acts as regular matter merge.");
+                        } else if (p1.type === 'blackhole' || p2.type === 'blackhole') {
+                            // Black holes merge into a larger black hole.
+                             console.log("Black Hole collision - they will merge.");
+                            let mergedMass = p1.mass + p2.mass;
+                            let mergedVelocity = p1.velocity.scale(p1.mass).add(p2.velocity.scale(p2.mass)).scale(1 / mergedMass);
+
+                            p1.mass = mergedMass;
+                            p1.velocity = mergedVelocity;
+                            // Black holes are always black, no color change based on mass
+                            particlesToRemove.add(j);
+                            console.log(`Black Hole: ${p1.name} merged with ${p2.name}. New mass: ${p1.mass.toFixed(0)}`);
+                        } else if (p1.type !== p2.type) { // Matter-Antimatter collision
                             let remainingMass = Math.abs(p1.mass - p2.mass);
                             
                             if (remainingMass > 0) {
@@ -285,7 +381,7 @@
 
                                 // Update survivor's properties
                                 survivor.mass = remainingMass;
-                                survivor.mesh.material.emissiveColor = getColorByMass(survivor.mass, survivor.type);
+                                survivor.mesh.material.emissiveColor = getColorByMass(survivor.mass, survivor.type); // Re-color based on new mass
                                 particlesToRemove.add(particles.indexOf(absorbed));
                                 console.log(`Matter-Antimatter: ${absorbed.name} annihilated. ${survivor.name} (${survivor.type}) with ${survivor.mass.toFixed(0)} remains.`);
 
@@ -302,7 +398,7 @@
 
                             p1.mass = mergedMass;
                             p1.velocity = mergedVelocity;
-                            p1.mesh.material.emissiveColor = getColorByMass(p1.mass, p1.type);
+                            p1.mesh.material.emissiveColor = getColorByMass(p1.mass, p1.type); // Re-color based on new mass
                             particlesToRemove.add(j); // Mark the second particle for removal
                             console.log(`${p1.type}-${p1.type}: ${p1.name} merged with ${p2.name}. New mass: ${p1.mass.toFixed(0)}`);
                         }
@@ -356,7 +452,14 @@
                 // Update size based on the mass (logarithmic for better visualization)
                 let scale = Math.log10(particle.mass + 1) / 2; // Increased scale factor (was /4)
                 if (scale < 0.2) scale = 0.2; // Increased minimum size (was 0.1)
-                particle.mesh.scaling.set(scale, scale, scale);
+                
+                // For Black Holes, keep diameter fixed as per button spec, scale mesh by that
+                if (particle.type === 'blackhole') {
+                    particle.mesh.scaling.set(particle.initialDiameter || 10, particle.initialDiameter || 10, particle.initialDiameter || 10);
+                } else {
+                    particle.mesh.scaling.set(scale, scale, scale);
+                }
+                
 
                 // Add current position to orbit points
                 particle.orbitPoints.push(particle.position.clone());
@@ -444,13 +547,27 @@
                 position = ray.origin.add(ray.direction.scale(10));
             }
             
-            let particleName = `ClickParticle-${particleIdCounter++}`; // Assign unique name
-            let sphere = BABYLON.MeshBuilder.CreateSphere(particleName, {diameter: 1}, scene);
+            // Use currentParticleDisplayName as base name
+            let particleName = `${currentParticleDisplayName || 'ClickParticle'}-${particleIdCounter++}`; 
+            // Use newParticleDiameter for sphere creation
+            let sphere = BABYLON.MeshBuilder.CreateSphere(particleName, {diameter: newParticleDiameter}, scene);
             sphere.position = position;
             
             // Create a new material for each particle to set individual colors
             let particleMaterial = new BABYLON.StandardMaterial("particleMat" + particles.length, scene);
-            particleMaterial.emissiveColor = getColorByMass(newParticleMass, currentParticleType); // Pass type
+            
+            // Determine color based on newParticleColorOverride first
+            if (typeof newParticleColorOverride === 'string') { // For 'neutron' or 'blackhole' or 'supernova'
+                particleMaterial.emissiveColor = getSpecialColorForType(newParticleColorOverride);
+            } else if (Array.isArray(newParticleColorOverride)) { // For RGB array
+                particleMaterial.emissiveColor = new BABYLON.Color3(
+                    newParticleColorOverride[0] / 255,
+                    newParticleColorOverride[1] / 255,
+                    newParticleColorOverride[2] / 255
+                );
+            } else { // Fallback to existing logic based on mass and currentParticleType
+                particleMaterial.emissiveColor = getColorByMass(newParticleMass, currentParticleType); 
+            }
             sphere.material = particleMaterial;
             
             let particle = {
@@ -459,6 +576,7 @@
                 position: position.clone(),
                 velocity: new BABYLON.Vector3(0, 0, 0),
                 mass: newParticleMass,
+                initialDiameter: newParticleDiameter, // Store initial diameter for types like Black Holes
                 orbitPoints: [position.clone()], // Start with initial position
                 orbitMesh: null,  // Mesh for the orbit line
                 type: currentParticleType, // New: particle type
@@ -494,7 +612,7 @@
                 orbitMesh: null,
                 type: 'matter', // Central body is always matter
                 nameText: null, // New: TextBlock for name
-                massText: null  // New: TextBlock for mass
+                massText: null
             };
             particles.push(centralParticle);
             console.log(`Generated central particle ${centralParticle.name}.`);
@@ -548,65 +666,110 @@
                     position: initialPosition.clone(),
                     velocity: velocity,
                     mass: mass,
+                    initialDiameter: 1, // Default diameter for proto-particles
                     orbitPoints: [initialPosition.clone()],
                     orbitMesh: null,
                     type: currentParticleType, // Assign current type
                     nameText: null, // New: TextBlock for name
-                    massText: null  // New: TextBlock for mass
+                    massText: null
                 });
             }
             console.log(`Generated Protodisk with ${particles.length} particles. Matter Type: ${currentParticleType}`);
             updateParticleCountDisplay(); // Update counter
         }
 
-        // Function to generate a random system of particles
+        // Function to generate a more stable random system with colored particles
         function generateRandomSystem() {
             clearParticles();
-            const numParticles = 25 + Math.floor(Math.random() * 10); // At least 25, up to 34
-            const spawnRadius = 20; // Max distance from origin for initial placement
-            const maxInitialVelocity = 0.5; // Max initial velocity magnitude
 
-            for (let i = 0; i < numParticles; i++) {
-                // Random position
+            // 1. Create a very massive central body (always matter)
+            const centralMass = 5.0e7; // Extremely massive to dominate gravity
+            let centralSystemBodyName = `SystemCenter-${particleIdCounter++}`;
+            let centralSphere = BABYLON.MeshBuilder.CreateSphere(centralSystemBodyName, {diameter: 1}, scene);
+            centralSphere.position = BABYLON.Vector3.Zero();
+            let centralMaterial = new BABYLON.StandardMaterial("centralSystemMat", scene);
+            centralMaterial.emissiveColor = new BABYLON.Color3(1, 0.8, 0); // Sun-like color for central body
+            centralSphere.material = centralMaterial;
+            let centralParticle = {
+                name: centralSystemBodyName,
+                mesh: centralSphere,
+                position: BABYLON.Vector3.Zero(),
+                velocity: new BABYLON.Vector3(0, 0, 0),
+                mass: centralMass,
+                initialDiameter: 1, // Default diameter
+                orbitPoints: [BABYLON.Vector3.Zero()],
+                orbitMesh: null,
+                type: 'matter',
+                nameText: null,
+                massText: null
+            };
+            particles.push(centralParticle);
+            console.log(`Generated central system body ${centralParticle.name}.`);
+
+            // 2. Generate orbiting "planets" or "moons"
+            const numPlanets = 10 + Math.floor(Math.random() * 20); // Between 10 and 29 planets
+            const innerOrbitRadius = 30;
+            const outerOrbitRadius = 150;
+            const orbitalPlaneSpread = 5; // How much deviation from the main orbital plane
+
+            for (let i = 0; i < numPlanets; i++) {
+                let randomRadius = innerOrbitRadius + (Math.random() * (outerOrbitRadius - innerOrbitRadius));
+                let randomAngle = Math.random() * 2 * Math.PI;
+                let randomHeight = (Math.random() - 0.5) * orbitalPlaneSpread;
+
                 let position = new BABYLON.Vector3(
-                    (Math.random() - 0.5) * spawnRadius * 2,
-                    (Math.random() - 0.5) * spawnRadius * 2,
-                    (Math.random() - 0.5) * spawnRadius * 2
+                    randomRadius * Math.cos(randomAngle),
+                    randomHeight,
+                    randomRadius * Math.sin(randomAngle)
                 );
 
-                // Random mass (e.g., between 100 and 100,000)
-                let mass = 100 + Math.random() * 99900; 
+                let mass = 1000 + Math.random() * 99000; // Random mass for planets/moons
 
-                // Random initial velocity
-                let velocity = new BABYLON.Vector3(
-                    (Math.random() - 0.5) * maxInitialVelocity * 2,
-                    (Math.random() - 0.5) * maxInitialVelocity * 2,
-                    (Math.random() - 0.5) * maxInitialVelocity * 2
-                );
+                // Calculate tangential velocity for a stable orbit around the central body
+                let distance = position.subtract(centralParticle.position).length();
+                let orbitalSpeed = Math.sqrt(G_EFFECTIVE * centralParticle.mass / distance);
 
-                let randomParticleName = `RandomParticle-${particleIdCounter++}`;
-                let sphere = BABYLON.MeshBuilder.CreateSphere(randomParticleName, {diameter: 1}, scene);
+                let directionFromCenter = position.subtract(centralParticle.position).normalize();
+                
+                // Use a consistent normal for the main plane (Y-axis), but allow for slight inclination
+                let orbitNormal = new BABYLON.Vector3(
+                    (Math.random() - 0.5) * 0.1,
+                    1,
+                    (Math.random() - 0.5) * 0.1
+                ).normalize();
+
+                let tangentialDirection = BABYLON.Vector3.Cross(directionFromCenter, orbitNormal).normalize();
+
+                // Randomly choose clockwise or counter-clockwise
+                let orbitalDirectionMultiplier = Math.random() < 0.5 ? 1 : -1;
+                tangentialDirection.scaleInPlace(orbitalDirectionMultiplier);
+
+                let velocity = centralParticle.velocity.add(tangentialDirection.scale(orbitalSpeed));
+
+                let planetName = `Planet-${particleIdCounter++}`;
+                let sphere = BABYLON.MeshBuilder.CreateSphere(planetName, {diameter: 1}, scene);
                 sphere.position = position;
                 
-                let particleMaterial = new BABYLON.StandardMaterial("randomMat" + i, scene);
-                particleMaterial.emissiveColor = getColorByMass(mass, currentParticleType); // Use current type
+                let particleMaterial = new BABYLON.StandardMaterial("planetMat" + i, scene);
+                particleMaterial.emissiveColor = getRandomColor(); // Use random color for planets
                 sphere.material = particleMaterial;
-                
+
                 particles.push({
-                    name: randomParticleName, // Add name property
+                    name: planetName,
                     mesh: sphere,
                     position: position.clone(),
                     velocity: velocity,
                     mass: mass,
+                    initialDiameter: 1, // Default diameter
                     orbitPoints: [position.clone()],
                     orbitMesh: null,
-                    type: currentParticleType, // Assign current type
-                    nameText: null, // New: TextBlock for name
-                    massText: null  // New: TextBlock for mass
+                    type: currentParticleType, // Assign current type for planets
+                    nameText: null,
+                    massText: null
                 });
             }
             console.log(`Generated Random System with ${particles.length} particles. Matter Type: ${currentParticleType}`);
-            updateParticleCountDisplay(); // Update counter
+            updateParticleCountDisplay();
         }
         
         // Function to generate an asteroid belt
@@ -627,11 +790,12 @@
                 position: BABYLON.Vector3.Zero(),
                 velocity: new BABYLON.Vector3(0, 0, 0),
                 mass: centralMass,
+                initialDiameter: 1, // Default diameter
                 orbitPoints: [BABYLON.Vector3.Zero()],
                 orbitMesh: null,
                 type: 'matter', // Central body is always matter
-                nameText: null, // New: TextBlock for name
-                massText: null  // New: TextBlock for mass
+                nameText: null,
+                massText: null
             };
             particles.push(centralParticle);
             console.log(`Generated central asteroid body ${centralParticle.name}.`);
@@ -694,20 +858,111 @@
                     position: position.clone(),
                     velocity: velocity,
                     mass: mass,
+                    initialDiameter: 1, // Default diameter
                     orbitPoints: [position.clone()],
                     orbitMesh: null,
                     type: currentParticleType, // Assign current type
-                    nameText: null, // New: TextBlock for name
-                    massText: null  // New: TextBlock for mass
+                    nameText: null,
+                    massText: null
                 });
             }
             console.log(`Generated Asteroid Belt with ${particles.length} particles. Matter Type: ${currentParticleType}`);
             updateParticleCountDisplay(); // Update counter
         }
 
-        function setSize(size) {
-            newParticleMass = size;
-            document.getElementById("mass").value = size.toExponential(1).replace("+", "");
+        // New function: generate a simplified Solar System with inclined orbits
+        function generateSolarSystem() {
+            clearParticles();
+
+            // Sun
+            const sunMass = 5.0e7; // Increased mass for the Sun for better stability
+            let sunName = `Sun-${particleIdCounter++}`;
+            let sunSphere = BABYLON.MeshBuilder.CreateSphere(sunName, {diameter: 1}, scene);
+            sunSphere.position = BABYLON.Vector3.Zero();
+            let sunMaterial = new BABYLON.StandardMaterial("sunMat", scene);
+            sunMaterial.emissiveColor = new BABYLON.Color3(1, 0.8, 0); // Yellow/Orange for Sun
+            sunSphere.material = sunMaterial;
+            let sunParticle = {
+                name: sunName,
+                mesh: sunSphere,
+                position: BABYLON.Vector3.Zero(),
+                velocity: new BABYLON.Vector3(0, 0, 0),
+                mass: sunMass,
+                initialDiameter: 1, // Default diameter
+                orbitPoints: [BABYLON.Vector3.Zero()],
+                orbitMesh: null,
+                type: 'matter',
+                nameText: null,
+                massText: null
+            };
+            particles.push(sunParticle);
+            console.log(`Generated ${sunParticle.name}.`);
+
+            // Planets (simplified) with adjusted distances and inclinations
+            const planetsData = [
+                { name: "Mercury", distance: 30, mass: 10000, color: new BABYLON.Color3(0.5, 0.5, 0.5), inclinationDeg: 7.0 },
+                { name: "Venus", distance: 50, mass: 80000, color: new BABYLON.Color3(0.8, 0.6, 0.2), inclinationDeg: 3.4 },
+                { name: "Earth", distance: 70, mass: 100000, color: new BABYLON.Color3(0.1, 0.5, 1), inclinationDeg: 0.0 },
+                { name: "Mars", distance: 90, mass: 15000, color: new BABYLON.Color3(0.8, 0.2, 0.1), inclinationDeg: 1.85 },
+                { name: "Jupiter", distance: 150, mass: 500000, color: new BABYLON.Color3(0.7, 0.5, 0.3), inclinationDeg: 1.3 },
+                { name: "Saturn", distance: 220, mass: 300000, color: new BABYLON.Color3(0.9, 0.8, 0.6), inclinationDeg: 2.5 },
+                { name: "Uranus", distance: 280, mass: 40000, color: new BABYLON.Color3(0.4, 0.8, 0.8), inclinationDeg: 0.77 },
+                { name: "Neptune", distance: 330, mass: 50000, color: new BABYLON.Color3(0.2, 0.2, 0.8), inclinationDeg: 1.77 }
+            ];
+
+            planetsData.forEach(data => {
+                // Base position and velocity in a flat XZ plane
+                let initialFlatPosition = new BABYLON.Vector3(data.distance, 0, 0);
+                let requiredSpeed = Math.sqrt(G_EFFECTIVE * sunMass / data.distance);
+                let initialFlatVelocity = new BABYLON.Vector3(0, 0, requiredSpeed); // Velocity along Z for X-position to orbit in XZ
+
+                // Add small random offset to inclination and a random ascending node
+                let actualInclination = data.inclinationDeg * Math.PI / 180 + (Math.random() - 0.5) * 0.01; // +/- 0.005 radians (~0.28 degrees)
+                let ascendingNode = Math.random() * 2 * Math.PI; // Random angle for ascending node
+
+                // Create rotation quaternion: first rotate around Y-axis (ascendingNode), then X-axis (inclination)
+                let rotationQuaternion = BABYLON.Quaternion.RotationYawPitchRoll(ascendingNode, actualInclination, 0);
+
+                // Apply rotation to initial position and velocity vectors
+                let position = initialFlatPosition.applyRotationQuaternion(rotationQuaternion);
+                let velocity = initialFlatVelocity.applyRotationQuaternion(rotationQuaternion);
+
+                let planetName = `${data.name}-${particleIdCounter++}`;
+                let sphere = BABYLON.MeshBuilder.CreateSphere(planetName, {diameter: 1}, scene);
+                sphere.position = position;
+                
+                let material = new BABYLON.StandardMaterial(`${data.name}Mat`, scene);
+                material.emissiveColor = data.color;
+                sphere.material = material;
+
+                particles.push({
+                    name: planetName,
+                    mesh: sphere,
+                    position: position.clone(),
+                    velocity: velocity,
+                    mass: data.mass,
+                    initialDiameter: 1, // Default diameter
+                    orbitPoints: [position.clone()],
+                    orbitMesh: null,
+                    type: 'matter', // Planets are matter
+                    nameText: null,
+                    massText: null
+                });
+                console.log(`Generated ${planetName} with mass ${data.mass.toFixed(0)} at distance ${data.distance}, inclination ${data.inclinationDeg.toFixed(2)} deg.`);
+            });
+
+            console.log(`Generated Solar System with ${particles.length} celestial bodies.`);
+            updateParticleCountDisplay();
+        }
+
+        // Modified setSize to accept an optional particle name, diameter, and color override
+        function setSize(mass, particleName = 'ClickParticle', diameter = 1, colorOverride = null) {
+            newParticleMass = mass;
+            currentParticleDisplayName = particleName;
+            newParticleDiameter = diameter; // Set the global diameter
+            newParticleColorOverride = colorOverride; // Set the global color override
+            document.getElementById("mass").value = mass.toExponential(1).replace("+", "");
+            console.log(`New particle type selected: ${currentParticleDisplayName} (Mass: ${newParticleMass.toExponential(1).replace("+", "")}, Diameter: ${newParticleDiameter}, Color/Type Override: ${newParticleColorOverride})`);
         }
         
         function clearParticles() {
@@ -790,10 +1045,12 @@
                 }
             }
 
-            // Random Moon Mass (e.g., between 50 and 500)
-            const moonMass = 50 + Math.random() * 450; 
-            // Random Orbit Distance (e.g., between 3 and 8)
-            const orbitDistance = 3 + Math.random() * 5; 
+            // Random Moon Mass in proportion to the parent particle's mass
+            // Between 1% and 11% of parent's mass
+            const moonMass = parentParticle.mass * (0.01 + Math.random() * 0.1); 
+            // Random Orbit Distance for higher, more exotic orbits
+            // Increased range for distance: 10 to 50 units (was 3 to 8)
+            const orbitDistance = 10 + Math.random() * 40; 
             
             // Generate a random initial position around the parent
             let randomDirection = new BABYLON.Vector3(
@@ -810,12 +1067,23 @@
             // Direction vector from parent to moon
             let directionToMoon = moonPosition.subtract(parentParticle.position).normalize();
             
-            // Generate a random normal vector for the orbital plane
+            // Generate a more random normal vector for the orbital plane (more exotic orbits)
             let orbitNormal = new BABYLON.Vector3(
                 Math.random() * 2 - 1,
                 Math.random() * 2 - 1,
                 Math.random() * 2 - 1
             ).normalize();
+
+            // Ensure orbitNormal is not too close to directionToMoon for cross product stability
+            // If they are nearly parallel, choose a different normal (e.g., perpendicular to XZ plane if the direction is mostly XZ)
+            if (BABYLON.Vector3.Dot(directionToMoon, orbitNormal) > 0.95 || BABYLON.Vector3.Dot(directionToMoon, orbitNormal) < -0.95) {
+                // Try a perpendicular vector in the XZ plane or Y axis
+                if (Math.abs(directionToMoon.y) < 0.8) { // If not mostly vertical
+                    orbitNormal = new BABYLON.Vector3(0, 1, 0).normalize(); // Use Y-axis as normal
+                } else { // If mostly vertical, use X-axis as normal
+                    orbitNormal = new BABYLON.Vector3(1, 0, 0).normalize();
+                }
+            }
 
             // Calculate tangential direction using cross product (perpendicular to position and orbit normal)
             let tangentialDirection = BABYLON.Vector3.Cross(directionToMoon, orbitNormal).normalize();
@@ -842,11 +1110,12 @@
                 position: moonPosition.clone(),
                 velocity: moonVelocity,
                 mass: moonMass,
+                initialDiameter: 1, // Default diameter
                 orbitPoints: [moonPosition.clone()],
                 orbitMesh: null,
                 type: currentParticleType, // Assign current type
-                nameText: null, // New: TextBlock for name
-                massText: null  // New: TextBlock for mass
+                nameText: null,
+                massText: null
             };
             
             particles.push(moonParticle);
