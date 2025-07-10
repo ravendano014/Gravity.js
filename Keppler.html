@@ -58,6 +58,8 @@
             border: solid #ffffff 1px;
             background-color: rgba(0, 0, 0, 0.7);
             z-index: 100;
+            max-height: 95vh;
+            overflow-y: auto;
         }
         
         #homebox {
@@ -107,6 +109,16 @@
             width: 100%;
             height: 100%;
             touch-action: none;
+        }
+        /* Scrollbar styling */
+        #controlbox::-webkit-scrollbar {
+            width: 6px;
+        }
+        #controlbox::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        #controlbox::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.5);
         }
     </style>
 </head>
