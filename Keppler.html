@@ -199,7 +199,7 @@
 
     <script>
         // Global Variables
-        let canvas, engine, scene, camera, light;
+        let canvas, engine, scene, camera;
         let particles = [];
         let newParticleMass = 1000;
         let currentParticleDisplayName = 'ClickParticle';
@@ -233,18 +233,13 @@
         // New: Collision Type Global
         let currentCollisionType = 'merge'; // 'merge', 'bounce', 'none', 'explode'
 
-        // Function to get a random color
+        // Particle Size Handling Constants
+        const MIN_PARTICLE_SCALE = 0.2; // Existing minimum
+        // Removed MAX_PARTICLE_SCALE constant
+
+        // Function to get a random color (reverted to simpler random RGB)
         function getRandomColor() {
-            const colors = [
-                new BABYLON.Color3(0, 0, 1),      // Blue
-                new BABYLON.Color3(0.5, 0, 1),    // Violet
-                new BABYLON.Color3(0, 1, 0),      // Green
-                new BABYLON.Color3(0.6, 0.4, 0.2),// Brown
-                new BABYLON.Color3(1, 0.7, 0.8),  // Pink
-                new BABYLON.Color3(1, 1, 0),      // Yellow
-                new BABYLON.Color3(1, 0.5, 0)     // Orange
-            ];
-            return colors[Math.floor(Math.random() * colors.length)];
+            return new BABYLON.Color3(Math.random(), Math.random(), Math.random());
         }
 
         // Helper function for special particle colors (Neutron Star, Black Hole, Supernova)
@@ -276,9 +271,11 @@
             currentCameraZoom = camera.radius; // Initialize with camera's actual radius
             document.getElementById("cameraZoomInput").value = currentCameraZoom.toFixed(0);
 
-            // Setup light
-            light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
-            light.intensity = 0.7;
+            // Setup lighting system (reverted to only HemisphericLight)
+            let hemiLight = new BABYLON.HemisphericLight("hemiLight", new BABYLON.Vector3(0, 1, 0), scene);
+            hemiLight.intensity = 1.0; // Reverted intensity
+
+            // Removed PointLight and DirectionalLight
 
             // Mouse events
             canvas.addEventListener("pointerdown", function(evt) {
@@ -572,7 +569,7 @@
                                 // If particles are moving apart, no collision (or already handled)
                                 if (vRelNormal > 0) continue;
 
-                                // Impulse magnitude (2 * reduced mass * vRelNormal / (p1.mass + p2.mass))
+                                // Impulse magnitude (2 * reduced mass * vRelNormal / (1/p1.mass + 1/p2.mass))
                                 let impulse = -2 * vRelNormal / (1/p1.mass + 1/p2.mass);
 
                                 // Apply impulse
@@ -619,7 +616,7 @@
                                     let fragmentVelocity = randomExplosionDirection.scale(explosionSpeed);
 
                                     let fragmentName = `Fragment-${particleIdCounter++}`;
-                                    let fragmentSphere = BABYLON.MeshBuilder.CreateSphere(fragmentName, {diameter: newParticleDiameter}, scene); // Changed here
+                                    let fragmentSphere = BABYLON.MeshBuilder.CreateSphere(fragmentName, {diameter: newParticleDiameter}, scene);
                                     fragmentSphere.position = collisionPoint.add(randomExplosionDirection.scale(0.5)); // Start slightly offset
 
                                     let fragmentMaterial = new BABYLON.StandardMaterial("fragmentMat" + particleIdCounter, scene);
@@ -697,7 +694,8 @@
 
                 // Update size based on mass (logarithmic for better visualization)
                 let scale = Math.log10(particle.mass + 1) / 3; // Adjusted scale factor for better visual range
-                if (scale < 0.2) scale = 0.2; // Minimum size for visibility
+                if (scale < MIN_PARTICLE_SCALE) scale = MIN_PARTICLE_SCALE; // Apply minimum size
+                // Removed line applying MAX_PARTICLE_SCALE
 
                 // For Black Holes, use the initial diameter if provided, otherwise scale by mass
                 if (particle.type === 'blackhole' && particle.initialDiameter) {
@@ -813,8 +811,6 @@
         }
 
         function generateProto() {
-            // clearParticles(); // Removed this line to allow incremental addition
-
             // Add a massive central particle (always matter) if it doesn't exist
             let centralParticle = particles.find(p => p.name.startsWith('CentralStar'));
             if (!centralParticle) {
@@ -1003,8 +999,6 @@
 
         // Function to generate an asteroid belt
         function generateAsteroidBelt() {
-            // clearParticles(); // Removed this line to allow incremental addition
-
             // Create a central, massive body (always matter for belt) if it doesn't exist
             let centralParticle = particles.find(p => p.name.startsWith('CentralMass'));
             if (!centralParticle) {
