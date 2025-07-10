@@ -59,14 +59,17 @@
 				-ms-user-select: none;
 				user-select: none;
 			}
-			#controlbox {
-				padding:5px;
-				padding-left:20px;
-				margin-left:-20px;
-				border: solid #ffffff 1px;
-				border-left-width: 0px;
-				width:200px;
-			}
+		        #controlbox {
+		            position: absolute;
+		            top: 10px;
+		            left: 10px;
+		            padding: 5px;
+		            border: solid #ffffff 1px;
+		            background-color: rgba(0, 0, 0, 0.7);
+		            z-index: 100;
+		            max-height: 95vh;
+		            overflow-y: auto;
+		        }
 			#homebox {
 				font-size:20px;
 				position:absolute;
@@ -154,6 +157,16 @@
 			display: flex;
 			align-items: center;
 		}
+		        /* Scrollbar styling */
+	        #controlbox::-webkit-scrollbar {
+	            width: 6px;
+	        }
+	        #controlbox::-webkit-scrollbar-track {
+	            background: rgba(0, 0, 0, 0.3);
+	        }
+	        #controlbox::-webkit-scrollbar-thumb {
+	            background: rgba(255, 255, 255, 0.5);
+	        }
 		</style>
 
 		<script>
