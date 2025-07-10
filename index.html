@@ -1209,49 +1209,45 @@
 
 				<table>
 						<tr>
-							<td><span class="seltxt">Celestial Body Mass:</span></td></br>
-							<td>
-								<select id="planetSelector" onchange="setCelestialBodyMass(this.value)">
-									<option value="sun">Sun</option>
-									<option value="mercury">Mercury</option>
-									<option value="venus">Venus</option>
-									<option value="earth">Earth</option>
-									<option value="mars">Mars</option>
-									<option value="jupiter">Jupiter</option>
-									<option value="saturn">Saturn</option>
-									<option value="uranus">Uranus</option>
-									<option value="neptune">Neptune</option>
-									<option value="blackhole">Black Hole</option>
-								</select>
-							</td>
+							<span class="seltxt">Celestial Body Mass:</span></tr>
+						<tr>
+							<select id="planetSelector" onchange="setCelestialBodyMass(this.value)">
+								<option value="sun">Sun</option>
+								<option value="mercury">Mercury</option>
+								<option value="venus">Venus</option>
+								<option value="earth">Earth</option>
+								<option value="mars">Mars</option>
+								<option value="jupiter">Jupiter</option>
+								<option value="saturn">Saturn</option>
+								<option value="uranus">Uranus</option>
+								<option value="neptune">Neptune</option>
+								<option value="blackhole">Black Hole</option>
+							</select>
 						</tr>
 						<tr>
-							<td><span class="seltxt">Moon Mass:</span></td></br>
-							<td>
-								<select id="moonSelector" onchange="setMoonMass(this.value)">
-									<option value="1.0e-1">Small Moon</option>
-									<option value="7.342e22">Earth's Moon</option>
-									<option value="1.076e23">Io</option>
-									<option value="4.800e22">Europa</option>
-									<option value="1.481e23">Ganymede</option>
-									<option value="1.076e23">Callisto</option>
-									<option value="1.345e23">Titan</option>
-									<option value="2.115e22">Rhea</option>
-									<option value="1.896e21">Iapetus</option>
-									<option value="1.345e23">Triton</option>
-									<option value="1.620e21">Charon</option>
-								</select>
-							</td>
-						</tr>
+						<span class="seltxt">Moon Mass:</span></tr>
 						<tr>
-							<td><span class="seltxt">System Size:</span></td></br>
-							<td>
-								<select id="systemSize">
-									<option value="small">Small (3-5 bodies)</option>
-									<option value="medium" selected>Medium (5-8 bodies)</option>
-									<option value="large">Large (8-12 bodies)</option>
-								</select>
-							</td>
+							<select id="moonSelector" onchange="setMoonMass(this.value)">
+								<option value="1.0e-1">Small Moon</option>
+								<option value="7.342e22">Earth's Moon</option>
+								<option value="1.076e23">Io</option>
+								<option value="4.800e22">Europa</option>
+								<option value="1.481e23">Ganymede</option>
+								<option value="1.076e23">Callisto</option>
+								<option value="1.345e23">Titan</option>
+								<option value="2.115e22">Rhea</option>
+								<option value="1.896e21">Iapetus</option>
+								<option value="1.345e23">Triton</option>
+								<option value="1.620e21">Charon</option>
+							</select>
+						</tr>
+						<tr><span class="seltxt">System Size:</span></tr>
+						<tr>
+							<select id="systemSize">
+								<option value="small">Small (3-5 bodies)</option>
+								<option value="medium" selected>Medium (5-8 bodies)</option>
+								<option value="large">Large (8-12 bodies)</option>
+							</select>
 						</tr>
 				</table>
 				<table>
